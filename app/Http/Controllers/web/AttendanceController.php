@@ -431,6 +431,38 @@ class AttendanceController extends Controller
         }
     }
 
+    public function resetClock(Request $request, $id)
+    {
+        if ($id == "null") {
+            $attendance = new Attendance;
+
+            return response()->json([
+                'message' => 'internal error',
+                'error' => true,
+                'code' => 500,
+                'errors' => 'Id cannot be null',
+            ], 500);
+        }
+
+        try {
+            $attendance = Attendance::find($id);
+            $attendance->delete();
+            return response()->json([
+                'message' => 'clock in has been updated',
+                'error' => false,
+                'data' => null,
+                'code' => 200,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'internal error',
+                'error' => true,
+                'code' => 500,
+                'errors' => $e,
+            ], 500);
+        }
+    }
+
     public function sheetAttendanceByEmployee(Request $request)
     {
         $employee_id = $request->query('employee_id');
@@ -512,7 +544,7 @@ class AttendanceController extends Controller
     {
         return view('attendance.upload-from-machine');
     }
-    
+
     public function uploadFromMachineApp()
     {
         return view('attendance.upload-from-machine-app');
@@ -1492,7 +1524,7 @@ class AttendanceController extends Controller
             // 'errors' => $e,
         ], 500);
     }
-    
+
     public function doUploadFromMachineApp(Request $request)
     {
         $importData = Excel::toCollection(collect([]), $request->file('file'));
@@ -1513,10 +1545,10 @@ class AttendanceController extends Controller
 
                     // $date = date("Y-d-m", strtotime(substr($dateTime, 0, 10)));
                     $date = '';
-                    if($userId !== 0) {
+                    if ($userId !== 0) {
                         $date = Carbon::createFromFormat('d/m/Y', substr($dateTime, 0, 10))->toDateString();
                     }
-                    
+
                     $clock = substr($dateTime, 10);
 
                     return [

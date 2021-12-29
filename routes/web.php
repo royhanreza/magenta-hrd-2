@@ -13,6 +13,7 @@ use App\Http\Controllers\web\CompanyLocationController;
 use App\Http\Controllers\web\CompanyNpwpController;
 use App\Http\Controllers\web\CompanyPolicyController;
 use App\Http\Controllers\web\DailyPayrollController;
+use App\Http\Controllers\web\DashboardController;
 use App\Http\Controllers\web\EmployeeController;
 use App\Http\Controllers\web\EmployeeFileController;
 use App\Http\Controllers\web\ErrorController;
@@ -68,9 +69,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', function () {
-        return redirect('/employee');
-    });
+    // Route::get('/', function () {
+    //     return redirect('/employee');
+    // });
+    Route::get('/', [DashboardController::class, 'index']);
 
     // Freelancer
     Route::prefix('freelancer')->group(function () {
@@ -271,6 +273,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/{id}/update-overtime', [AttendanceController::class, 'updateOvertime']);
         Route::post('/{id}/update-clockin', [AttendanceController::class, 'updateClockIn']);
         Route::post('/{id}/update-clockout', [AttendanceController::class, 'updateClockOut']);
+        Route::delete('/{id}/reset-clock', [AttendanceController::class, 'resetClock']);
     });
 
     //Bank Account
@@ -462,7 +465,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [LeavePayroll::class, 'index']);
         Route::post('/', [LeavePayroll::class, 'store']);
     });
-    
+
     // Employee File
     Route::prefix('employee-file')->group(function () {
         Route::post('/', [EmployeeFileController::class, 'store']);

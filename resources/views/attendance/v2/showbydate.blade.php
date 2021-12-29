@@ -264,8 +264,27 @@
                                             </td>
                                             <!-- End:Status -->
                                             <!-- Jam Masuk & Keluar -->
-                                            <td class="text-center"><input type="time" data-date="{{ date('Y-m-d', strtotime($date)) }}" :data-employee="attendance.id" :data-id="attendance.checkin_id" @change="updateClockIn($event, index)" class="form-control form-control-sm attendance-time" :value="attendance.clock_in"></td>
-                                            <td class="text-center"><input type="time" data-date="{{ date('Y-m-d', strtotime($date)) }}" :data-employee="attendance.id" :data-id="attendance.checkout_id" @change="updateClockOut($event, index)" class="form-control form-control-sm attendance-time" :value="attendance.clock_out"></td>
+                                            <td class="text-center">
+                                                <div class="input-group">
+                                                    <input type="time" data-date="{{ date('Y-m-d', strtotime($date)) }}" :data-employee="attendance.id" :data-id="attendance.checkin_id" @change="updateClockIn($event, index)" class="form-control form-control-sm attendance-time" :value="attendance.clock_in" style="width: 120px;">
+                                                    <div class="input-group-append">
+                                                        <button v-if="attendance.clock_in" class="btn btn-sm btn-dark" @click="resetClockIn($event, index)" :data-id="attendance.checkin_id" type="button" style="line-height: 0.5;">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="input-group">
+                                                    <input type="time" data-date="{{ date('Y-m-d', strtotime($date)) }}" :data-employee="attendance.id" :data-id="attendance.checkout_id" @change="updateClockOut($event, index)" class="form-control form-control-sm attendance-time" :value="attendance.clock_out" style="width: 120px;">
+                                                    <div class="input-group-append">
+                                                        <button v-if="attendance.clock_out" class="btn btn-sm btn-dark" @click="resetClockOut($event, index)" :data-id="attendance.checkout_id" type="button" style="line-height: 0.5;">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                            </td>
                                             <!-- End:Jam Masuk & Keluar  -->
                                             <!-- Lembur -->
                                             <td class="text-center">
@@ -276,7 +295,7 @@
                                             <!-- Attachment -->
                                             <td class="text-center">
                                                 <div v-if="attendance.images.length">
-                                                    <a v-for="image in attendance.images"  :href="'https://arenzha.s3.ap-southeast-1.amazonaws.com/' + image" target="_blank" class="mr-3"><i class="fas fa-paperclip"></i> @{{ image }}</a>
+                                                    <a v-for="image in attendance.images" :href="'https://arenzha.s3.ap-southeast-1.amazonaws.com/' + image" target="_blank" class="mr-3"><i class="fas fa-paperclip"></i> @{{ image }}</a>
                                                 </div>
                                                 <span v-else>-</span>
                                             </td>
@@ -467,7 +486,7 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops',
-                            text: "Can't update overtime",
+                            text: "Failed to update overtime",
                         })
                     });
             },
@@ -516,7 +535,7 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops',
-                            text: "Can't update clock in",
+                            text: "Failed to update clock in",
                         })
                     });
             },
@@ -574,7 +593,63 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops',
-                            text: "Can't update clock out",
+                            text: "Failed to update clock out",
+                        })
+                    });
+            },
+            resetClockIn: function(event, index) {
+                let vm = this;
+
+                // let id = event.target.getAttribute('data-id');
+                let id = vm.attendances[index].checkin_id;
+                if (!id) {
+                    id = null;
+                }
+
+                axios.delete('/attendance/' + id + '/reset-clock')
+                    .then(function(response) {
+                        console.log('clock in updated');
+                        // console.log(response.data);
+                        vm.attendances[index].checkin_id = null;
+                        vm.attendances[index].clock_in = null;
+                        if (!vm.attendances[index].clock_out && !vm.attendances[index].checkout_id) {
+                            vm.attendances[index].status = null;
+                        }
+                    })
+                    .catch(function(error) {
+                        console.log(error.data);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops',
+                            text: "Failed to reset clock in",
+                        })
+                    });
+            },
+            resetClockOut: function(event, index) {
+                let vm = this;
+
+                // let id = event.target.getAttribute('data-id');
+                let id = vm.attendances[index].checkout_id;
+                if (!id) {
+                    id = null;
+                }
+
+                axios.delete('/attendance/' + id + '/reset-clock')
+                    .then(function(response) {
+                        console.log('clock out updated');
+                        // console.log(response.data);
+                        vm.attendances[index].checkout_id = null;
+                        vm.attendances[index].clock_out = null;
+                        if (!vm.attendances[index].clock_in && !vm.attendances[index].checkin_id) {
+                            vm.attendances[index].status = null;
+                        }
+                    })
+                    .catch(function(error) {
+                        console.log(error.data);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops',
+                            text: "Failed to reset clock out",
                         })
                     });
             },

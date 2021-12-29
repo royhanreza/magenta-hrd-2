@@ -96,7 +96,7 @@
               vm.loading = false;
               vm.incorrectCredential = false;
               vm.disable = true;
-              window.location.href = '/employee';
+              window.location.href = '/';
               // console.log(response.data);
               // Swal.fire({
               //   icon: 'success',
