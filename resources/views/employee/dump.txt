@@ -1,0 +1,70 @@
+=========== TABLE EMPLOYEES ==============
+
+<!-- <div class="card">
+          <div class="card-header d-flex">
+            <h5 class="card-header-title">List All Employees</h5>
+            <div class="toolbar ml-auto">
+              <a href="{{ url('employee/create') }}" class="btn btn-primary btn-sm"><i class="fas fa-fw fa-plus"></i> Add New</a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered use-datatable">
+                <thead class="bg-light text-center">
+                  <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Contact Number</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($employees as $employee)
+                  <tr>
+                    <td>{{ $employee->employee_id }}</td>
+                    <td>{{ $employee->first_name . ' ' . $employee->last_name }}</td>
+                    <td>{{ $employee->designation->department->company->name }}</td>
+                    <td>{{ $employee->email }}</td>
+                    <td>{{ $employee->contact_number }}</td>
+                    <td class="text-center">
+                      @if($employee->is_active == 1)
+                      <span class="badge-dot badge-success"></span>Active
+                      @else
+                      <span class="badge-dot badge-danger"></span>Inactive
+                      @endif
+                    </td>
+                    <td class="text-center" style="width: 15%;">
+                      <div class="btn-group" role="group" aria-label="Action Buttons">
+                        <a href="{{ url('employee/edit/') . '/' . $employee->id }}" class="btn btn-sm btn-light"><i class="fas fa-fw fa-pencil-alt"></i></a>
+                        <button type="button" class="btn btn-sm btn-light btn-delete" data-id="{{ $employee->id }}"><i class="fas fa-fw fa-trash"></i></button>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Other">
+                            <i class="fas fa-fw fa-cog"></i>
+                          </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" href="{{ url('employee/detail/') . '/' . $employee->id }}">Detail</a>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  @endforeach
+                </tbody>
+                <tfoot class="text-center">
+                  <tr>
+                    <th>Employee ID</th>
+                    <th>Identity Number</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Contact Number</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div> -->

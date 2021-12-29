@@ -1,0 +1,4 @@
+[Event] Create, Edit
+[Employee] Create, Edit
+[Department] Create, Edit
+[Designation] Create, Edit
