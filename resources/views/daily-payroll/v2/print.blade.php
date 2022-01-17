@@ -183,36 +183,36 @@
             </tr>
         </tfoot>
     </table>
-    <!-- <h4 style="margin-top: 10px;">Deduction</h4> -->
-    <!--<table class="table-detail" style="margin-top: 30px;">-->
-    <!--    <thead>-->
-    <!--        <tr>-->
-    <!--            <td>Deduction</td>-->
-    <!--            <td class="text-right">Jumlah</td>-->
-    <!--        </tr>-->
-    <!--    </thead>-->
-    <!--    <tbody>-->
-    <!--        <?php $totalDeduction = 0; ?>-->
-    <!--        @if(is_array($final_payslip->deduction)) -->
-    <!--        @foreach($final_payslip->deduction as $deduction)-->
-    <!--        <tr>-->
-    <!--            <td>{{ $deduction->name }}</td>-->
-    <!--            <td class="text-right">Rp {{ number_format($deduction->value, 0, ",", ".") }}</td>-->
-    <!--            <?php $totalDeduction += $deduction->value ?>-->
-    <!--        </tr>-->
-    <!--        @endforeach-->
-    <!--        @endif-->
-    <!--    </tbody>-->
-    <!--</table>-->
+    <h4 style="margin-top: 10px;">Deduction</h4>
+    <table class="table-detail" style="margin-top: 30px;">
+        <thead>
+            <tr>
+                <td>Deduction</td>
+                <td class="text-right">Jumlah</td>
+            </tr>
+        </thead>
+        <tbody>
+            <?php $totalDeduction = 0; ?>
+            @if(is_array($final_payslip->deduction))
+            @foreach($final_payslip->deduction as $deduction)
+            <tr>
+                <td>{{ $deduction->name }}</td>
+                <td class="text-right">Rp {{ number_format($deduction->value, 0, ",", ".") }}</td>
+                <?php $totalDeduction += $deduction->value ?>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
 
-    <!--<table class="table-detail" style="margin-top: 30px;">-->
-    <!--    <tfoot>-->
-    <!--        <tr>-->
-    <!--            <th class="text-left">TAKE HOME PAY</th>-->
-    <!--            <th class="text-right">Rp {{ number_format($totalDailyMoney + $totalOvertimePay - $totalDeduction, 0, ",", ".") }}</th>-->
-    <!--        </tr>-->
-    <!--    </tfoot>-->
-    <!--</table>-->
+    <table class="table-detail" style="margin-top: 30px;">
+        <tfoot>
+            <tr>
+                <th class="text-left">TAKE HOME PAY</th>
+                <th class="text-right">Rp {{ number_format($totalDailyMoney + $totalOvertimePay - $totalDeduction, 0, ",", ".") }}</th>
+            </tr>
+        </tfoot>
+    </table>
 </body>
 
 </html>

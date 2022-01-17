@@ -137,7 +137,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                       <div class="form-group row">
                         <label for="role" class="col-sm-3 col-form-label">Hak Akses<sup class="text-danger">*</sup></label>
                         <div class="col-sm-9">
-                          <select2 v-model="role" :options="roles" class="form-control form-control-sm" required></select2>
+                          <select2 v-model="role" :options="roles.filter(role => role.id !== 8)" class="form-control form-control-sm" required></select2>
                         </div>
                       </div>
 

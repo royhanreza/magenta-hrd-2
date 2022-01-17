@@ -624,6 +624,16 @@ class EmployeeController extends Controller
 
     public function career($id)
     {
+        $permissions = [];
+        try {
+            $permissions = json_decode(Auth::user()->role->role_permissions);
+        } catch (\Throwable $th) {
+            abort(500, $th);
+        }
+
+        if (!in_array("staffSalary", $permissions)) {
+            abort(401, 'Akses ditolak');
+        }
         $employee = Employee::findOrFail($id);
         $lastCareer = Career::with(['designation', 'department', 'jobTitle'])->find(DB::table('careers')->where('employee_id', $id)->max('id'));
         $careers = Career::with(['payslips', 'department', 'designation', 'jobTitle'])->where('employee_id', $id)->orderByDesc('effective_date')->get();
@@ -633,6 +643,17 @@ class EmployeeController extends Controller
 
     public function payslip($id)
     {
+        $permissions = [];
+        try {
+            $permissions = json_decode(Auth::user()->role->role_permissions);
+        } catch (\Throwable $th) {
+            abort(500, $th);
+        }
+
+        if (!in_array("staffSalary", $permissions)) {
+            abort(401, 'Akses ditolak');
+        }
+
         $employee = Employee::findOrFail($id);
         $lastCareer = Career::with(['designation', 'department', 'jobTitle'])->find(DB::table('careers')->where('employee_id', $id)->max('id'));
         // $career = Career::with(['payslips'])->where('employee_id', $id)->first();
@@ -1416,7 +1437,7 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
-    
+
     public function activateEmployee(Request $request, $id)
     {
         try {

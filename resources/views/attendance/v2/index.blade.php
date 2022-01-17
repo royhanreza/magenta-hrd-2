@@ -537,7 +537,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
 
                         vm.attendances[index].checkin_id = data.id;
                         vm.attendances[index].clock_in = newClock;
-                        vm.attendances[index].status = 'present';
+                        if (!vm.attendances[index].status) {
+                            vm.attendances[index].status = 'present';
+                        }
                     })
                     .catch(function(error) {
                         console.log(error.data);
@@ -594,7 +596,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
 
                         vm.attendances[index].checkout_id = data.id;
                         vm.attendances[index].clock_out = newClock;
-                        vm.attendances[index].status = 'present';
+                        if (!vm.attendances[index].status) {
+                            vm.attendances[index].status = 'present';
+                        }
                     })
                     .catch(function(error) {
                         $('.attendance-time').prop('disabled', false);

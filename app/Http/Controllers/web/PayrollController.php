@@ -18,6 +18,7 @@ use DatePeriod;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
@@ -99,8 +100,6 @@ class PayrollController extends Controller
             ];
         })->all();
 
-
-
         $noStatusAttendances = $request->no_status_attendances;
         $index = 0;
         foreach ($noStatusAttendances as $item) {
@@ -180,8 +179,15 @@ class PayrollController extends Controller
     public function show(Request $request, $id)
     {
 
+        try {
+            $permissions = json_decode(Auth::user()->role->role_permissions);
+        } catch (\Throwable $th) {
+            abort(500, $th);
+        }
+
         $month = $request->query('month');
         $year = $request->query('year');
+        $staffOnly = $request->query('staffonly');
 
         $payslips = PaySlip::where('period_type', 'tetap')->get();
 
@@ -195,12 +201,23 @@ class PayrollController extends Controller
         // $endDatePeriod = '2021-06-10';
         // $months = ['Januari', 'Februari', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         // return $payslips;
+
         $previewPayslips = Career::whereHas('payslips', function ($q) use ($id) {
             $q->where('pay_slip_id', $id);
         })
-            ->whereHas('employee', function ($q) use ($id) {
+            ->whereHas('employee', function ($q) use ($id, $permissions, $staffOnly) {
                 // $q->where('type', 'non staff')->orWhere('type', 'staff')->where('is_active', 1);
-                $q->where('type', '!=', 'freelancer')->where('is_active', 1);
+                // $q->where('type', '!=', 'freelancer')->where('is_active', 1);
+                $excludeType = ['freelancer'];
+                if (!in_array("staffSalary", $permissions)) {
+                    array_push($excludeType, 'staff');
+                } else {
+                    if ($staffOnly !== null && $staffOnly == "true") {
+                        $excludeType = ['freelancer', 'non staff'];
+                    }
+                }
+
+                $q->whereNotIn('type', $excludeType)->where('is_active', 1);
             })
             ->where('is_active', 1)
             ->with(['employee' => function ($q) use ($employeeColumns, $startDatePeriod, $endDatePeriod) {
@@ -332,15 +349,28 @@ class PayrollController extends Controller
         $finalPayslips = FinalPayslip::query()
             ->with(['employee'])
             ->where('type', 'fix_period')
-            // ->whereIn('pay_slip_id', [2])
             ->whereBetween('start_date_period', [$startDatePeriod, $endDatePeriod])
             ->orWhereBetween('end_date_period', [$startDatePeriod, $endDatePeriod])
             ->get()
             ->where('pay_slip_id', $id)
+            ->filter(function ($payslip) use ($permissions, $staffOnly) {
+                $excludeType = ['freelancer'];
+                if (!in_array("staffSalary", $permissions)) {
+                    array_push($excludeType, 'staff');
+                } else {
+                    if ($staffOnly !== null && $staffOnly == "true") {
+                        $excludeType = ['freelancer', 'non staff'];
+                    }
+                }
+                if (isset($payslip->employee)) {
+                    return !in_array($payslip->employee->type, $excludeType);
+                }
+                return false;
+            })
             ->each(function ($item, $key) {
                 $item->income = json_decode($item->income);
                 $item->deduction = json_decode($item->deduction);
-            });
+            })->values()->all();
 
         // return $finalPayslips;
 
@@ -905,6 +935,7 @@ class PayrollController extends Controller
     {
         $startDatePeriod = $request->query('start_date_period');
         $endDatePeriod = $request->query('end_date_period');
+        $staffOnly = $request->query('staffonly');
 
         $employees = Employee::with(['npwp', 'activeCareer', 'activeCareer' => function ($query) {
             $query->with(['designation', 'department', 'jobTitle']);
@@ -943,6 +974,6 @@ class PayrollController extends Controller
 
         // return $employees;
 
-        return Excel::download(new PayrollReportExport($startDatePeriod, $endDatePeriod), 'Laporan Gaji ' . $startDatePeriod . ' - ' . $endDatePeriod . '.xlsx');
+        return Excel::download(new PayrollReportExport($startDatePeriod, $endDatePeriod, $staffOnly), 'Laporan Gaji ' . $startDatePeriod . ' - ' . $endDatePeriod . '.xlsx');
     }
 }

@@ -88,26 +88,26 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
             <div class="card-header d-flex">
               <h5 class="card-header-title">{{ $payslip->name }}</h5>
               <div class="toolbar ml-auto">
-                <a href="/payroll/export/report/monthly?start_date_period={{ $start_date_period }}&end_date_period={{ $end_date_period }}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-fw fa-file-alt"></i> Download Laporan(.xlsx)</a>
+                <a href="/payroll/export/report/monthly?start_date_period={{ $start_date_period }}&end_date_period={{ $end_date_period }}&staffonly={{ request()->query('staffonly') !== null ? request()->query('staffonly') : 'false' }}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-fw fa-file-alt"></i> Download Laporan(.xlsx)</a>
               </div>
             </div>
             <div class="card-body">
               <form>
                 <div class="form-row">
-                  <div class="col-3">
-                    <select @change="navigate" v-model="payslipId" class="form-control">
+                  <div class="col-lg-3 col-sm-12">
+                    <select @change="navigate" v-model="payslipId" class="form-control" :disabled="isNavigating">
                       <!-- <option value="">Semua</option> -->
                       @foreach($payslips as $option)
                       <option value="{{ $option->id }}" {{ ($option->id == $payslip->id ) ? 'selected' : '' }}>{{ $option->name }}</option>
                       @endforeach
                     </select>
                   </div>
-                  <div class="col-2">
+                  <div class="col-lg-2 col-md-3 col-sm-12 ">
                     <div class="input-group mb-3">
                       <!-- <div class="input-group-prepend">
                         <button class="btn btn-outline-light btn-sm" type="button"><i class="fas fa-angle-left"></i></button>
                       </div> -->
-                      <select @change="navigate" v-model="month" class="form-control">
+                      <select @change="navigate" v-model="month" class="form-control" :disabled="isNavigating">
                         <option value="01">Januari</option>
                         <option value="02">Februari</option>
                         <option value="03">Maret</option>
@@ -123,9 +123,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                       </select>
                     </div>
                   </div>
-                  <div class="col-2">
+                  <div class="col-lg-2 col-md-3 col-sm-12">
                     <div class="input-group mb-3">
-                      <select @change="navigate" v-model="year" class="form-control">
+                      <select @change="navigate" v-model="year" class="form-control" :disabled="isNavigating">
                         <option value="2020">2020</option>
                         <option value="2021">2021</option>
                       </select>
@@ -134,9 +134,14 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                       </div> -->
                     </div>
                   </div>
-                  <div class="col-2">
+                  @if(in_array("staffSalary", $userLoginPermissions))
+                  <div class="col-lg-3 col-md-3 col-sm-12">
+                    <label class="custom-control custom-checkbox">
+                      <input type="checkbox" v-model="staffOnly" @change="navigate" class="custom-control-input" :disabled="isNavigating"><span class="custom-control-label" style="line-height: 2.4;"><strong>Hanya tampilkan staff</strong></span>
+                    </label>
                     <!-- <button class="btn btn-primary btn-sm">Lihat</button> -->
                   </div>
+                  @endif
                 </div>
               </form>
 
@@ -194,7 +199,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                     </tr>
                   </thead>
                   <tbody>
-                    <tr is="final-payslip" v-for="finalPayslip in finalPayslips" :key="finalPayslip.id" :id="finalPayslip.id" :name="finalPayslip.employee.first_name" :ondelete="deletePayslip"></tr>
+                    <tr is="final-payslip" v-for="finalPayslip in finalPayslips" :key="finalPayslip.id" :id="finalPayslip.id" :name="finalPayslip.employee?.first_name" :ondelete="deletePayslip"></tr>
                     <tr is="payslip" v-for="career in careers" :key="career.id" :id="career.id" :name="career.employee.first_name" :checkedcareers.sync="checkedCareers" :onshowmodal="showModal"></tr>
                     @foreach($preview_payslips as $preview_payslip)
                     <!-- <tr>
@@ -475,12 +480,14 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
     data: {
       checkedCareers: [],
       careers: JSON.parse(String.raw `{!! $preview_payslips !!}`),
-      finalPayslips: JSON.parse(String.raw `{!! $final_payslips !!}`),
+      finalPayslips: JSON.parse(String.raw `{!! json_encode($final_payslips) !!}`),
       payslipIsSelected: false,
       selectedCareerIndex: null,
       modalSkeleton: false,
       month: '{{ request()->query("month") }}',
       year: '{{ request()->query("year") }}',
+      staffOnly: '{{ request()->query("staffonly") }}' == "true" ? true : false,
+      isNavigating: false,
       payslipId: '{{ $payslip->id }}',
       loadingCreatePayslip: false,
       startDatePeriod: `{{ $start_date_period }}`,
@@ -594,7 +601,8 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
         return Number(totalIncome) - totalDeduction;
       },
       navigate: function() {
-        window.location.href = `/payroll/${this.payslipId}?month=${this.month}&year=${this.year}`;
+        this.isNavigating = true;
+        window.location.href = `/payroll/${this.payslipId}?month=${this.month}&year=${this.year}&staffonly=${this.staffOnly}`;
       },
       moment: function(date) {
         return moment(date);

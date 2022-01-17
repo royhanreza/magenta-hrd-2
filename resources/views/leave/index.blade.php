@@ -68,23 +68,30 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
               <div class="table-responsive">
                 <table class="table table-bordered use-datatable">
                   <thead class="bg-light text-center">
+                    <?php $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'Nvember', 'Desember'] ?>
                     <tr>
-                      <th>Nama Pegawai</th>
+                      <th rowspan="2">Nama Pegawai</th>
                       <!-- <th>Jenis Izin</th> -->
-                      <th>Jatah Cuti</th>
-                      <th>Cuti Diambil</th>
+                      <th rowspan="2">Jatah Cuti</th>
+                      <th colspan="{{ count($months) }}">Cuti Diambil</th>
+                      <th rowspan="2">Total Cuti Diambil</th>
                       <!--<th>Jatah Carry Forward</th>-->
                       <!--<th>Carry Forward Diambil</th>-->
                       <!--<th>Total Diambil</th>-->
-                      <th>Sisa</th>
-                      <th>Action</th>
+                      <th rowspan="2">Sisa</th>
+                      <th rowspan="2">Action</th>
+                    </tr>
+                    <tr>
+                      @foreach($months as $month)
+                      <td>{{ $month }}</td>
+                      @endforeach
                     </tr>
                   </thead>
                   <tbody>
                     @foreach($leaves as $leave)
                     <tr>
                       <td>
-                          <span>{{ $leave->employee->first_name }}<br><small>{{ $leave->employee->employee_id }}</small></span>
+                        <span>{{ $leave->employee->first_name }}<br><small>{{ $leave->employee->employee_id }}</small></span>
                         <!--<div class="row">-->
                         <!--  <div class="col-md-3">-->
                         <!--    <img src="{{ ($leave->employee->photo !== null) ? Storage::disk('s3')->url($leave->employee->photo) : 'https://cabdindikwil1.com/wp-content/uploads/2020/12/male.png' }}" alt="" width="45" class="rounded">-->
@@ -95,6 +102,10 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                         <!--</div>-->
                       </td>
                       <td class="text-center">{{ $leave->total_leave }}</td>
+                      @foreach($months as $index => $month)
+                      <td></td>
+                      @endforeach
+                      <td class="text-center"></td>
                       <td class="text-center">{{ $leave->taken_leave }}</td>
                       <!--<td class="text-center">{{ $leave->total_carry_forward }}</td>-->
                       <!--<td class="text-center">{{ $leave->taken_carry_forward }}</td>-->

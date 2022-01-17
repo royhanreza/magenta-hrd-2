@@ -17,9 +17,17 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
     </li>
     @endif
     @if(in_array("viewEmployeeCareer", $userLoginPermissions))
+    @if($employee->type == 'staff')
+    @if(in_array("staffSalary", $userLoginPermissions))
     <li class="nav-item">
       <a href="/employee/career/{{ $employee->id }}" class="nav-link {{ request()->is('employee/career/*') || request()->is('career/*') ? 'active' : '' }}">Karir & Remunerasi</a>
     </li>
+    @endif
+    @else
+    <li class="nav-item">
+      <a href="/employee/career/{{ $employee->id }}" class="nav-link {{ request()->is('employee/career/*') || request()->is('career/*') ? 'active' : '' }}">Karir & Remunerasi</a>
+    </li>
+    @endif
     @endif
     @if(in_array("viewEmployeeAttendance", $userLoginPermissions))
     <li class="nav-item">
@@ -46,10 +54,18 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
       <a href="/employee/leave/{{ $employee->id }}" class="nav-link {{ request()->is('employee/leave/*') ? 'active' : '' }}">Cuti</a>
     </li>
     @endif
-    @if(in_array("viewEmployeePayslip", $userLoginPermissions))
+    @if(in_array("viewEmployeePayslip", $userLoginPermissions) && in_array("staffSalary", $userLoginPermissions))
+    @if($employee->type == 'staff')
+    @if(in_array("staffSalary", $userLoginPermissions))
     <li class="nav-item">
       <a href="/employee/payslip/{{ $employee->id }}" class="nav-link {{ request()->is('employee/payslip/*') ? 'active' : '' }}">Slip Gaji</a>
     </li>
+    @endif
+    @else
+    <li class="nav-item">
+      <a href="/employee/payslip/{{ $employee->id }}" class="nav-link {{ request()->is('employee/payslip/*') ? 'active' : '' }}">Slip Gaji</a>
+    </li>
+    @endif
     @endif
     @if(in_array("viewEmployeeLoan", $userLoginPermissions))
     <li class="nav-item">

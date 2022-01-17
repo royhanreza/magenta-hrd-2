@@ -369,7 +369,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Leave
     Route::prefix('leave')->group(function () {
-        Route::get('/', [LeaveController::class, 'index']);
+        Route::get('/', [LeaveController::class, 'indexV2']);
         Route::get('/submission', [LeaveController::class, 'submission']);
         Route::get('/submission/edit/{id}', [LeaveController::class, 'editSubmission']);
         Route::get('/create', [LeaveController::class, 'create']);

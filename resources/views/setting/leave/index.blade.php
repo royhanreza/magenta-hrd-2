@@ -127,7 +127,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                   </label>
                   <div class="row pl-5">
                     <select v-model="massPeriodDay" class="form-control form-control-sm col-sm-1 col-xs-4 mr-2">
-                      @for($i = 1; $i <= 28; $i++) <option value="{{ '0' . $i }}">{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}</option>
+                      @for($i = 1; $i <= 31; $i++) <option value="{{ '0' . $i }}">{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}</option>
                         @endfor
                     </select>
                     <select v-model="massPeriodMonth" class="form-control form-control-sm col-sm-2 col-xs-8">

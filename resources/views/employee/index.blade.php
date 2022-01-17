@@ -432,9 +432,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
     moment.locale('id');
 
     $('table.use-datatable').DataTable();
-    
+
     const observer = lozad(); // lazy loads elements with default selector as '.lozad'
-        observer.observe();
+    observer.observe();
 
     $('.start-work-date').each((index, el) => {
       if (el.textContent !== null && el.textContent !== '') {

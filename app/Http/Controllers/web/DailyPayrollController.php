@@ -407,6 +407,19 @@ class DailyPayrollController extends Controller
             });
 
             $totalMinutesOfDelay = collect($period)->filter(function ($p) {
+                // if ($p['attendance'] == null) {
+                //     return false;
+                // } else {
+                //     if (isset($p['attendance']['category'])) {
+                //         if ($p['attendance']['category'] == 'present') {
+                //             return true;
+                //         } else {
+                //             return false;
+                //         }
+                //     } else {
+                //         return false;
+                //     }
+                // }
                 return $p['attendance'] !== null;
             })->sum(function ($p) {
                 return $p['attendance']['minutes_of_delay'];
@@ -436,11 +449,12 @@ class DailyPayrollController extends Controller
         //     return $item->date;
         // })->all();
 
+        // return $employees;
         // return $attendancesKeys;
         // $employees = collect($employees)->except(['attendances']);
-        $excludeEmployees = collect($finalPayslips)->map(function ($item, $key) {
-            return $item->employee_id;
-        });
+        // $excludeEmployees = collect($finalPayslips)->map(function ($item, $key) {
+        //     return $item->employee_id;
+        // });
 
         // $employees = collect($employees)->map(function ($item, $key) {
         //     return collect($item)->except(['attendances'])->toArray();
@@ -448,7 +462,6 @@ class DailyPayrollController extends Controller
         // })->whereNotIn('id', $excludeEmployees)->values();
 
         // $employees = collect($employees)->whereNotIn('id', $excludeEmployees)->all();
-        // return $employees;
         return response()->json([
             'message' => 'OK',
             'error' => false,
@@ -578,9 +591,11 @@ class DailyPayrollController extends Controller
                 $upperLimit = date('H:i:s', strtotime('08:00:00'));
                 $clock = date('H:i:s', strtotime($clockIn));
 
-                if ($clock > $upperLimit) {
-                    // $minutesOfDelay = $upperLimit->diff($clock)->format('i');
-                    $minutesOfDelay = Carbon::parse($upperLimit)->diffInMinutes($clock);
+                if ($category == 'present') {
+                    if ($clock > $upperLimit) {
+                        // $minutesOfDelay = $upperLimit->diff($clock)->format('i');
+                        $minutesOfDelay = Carbon::parse($upperLimit)->diffInMinutes($clock);
+                    }
                 }
 
                 // $minutesOfDelay =  $upperLimit
