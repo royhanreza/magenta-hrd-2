@@ -134,6 +134,7 @@
                 <td>Masuk</td>
                 <td>Pulang</td>
                 <td>Lembur</td>
+                <td>Keterlambatan</td>
                 <td>Gaji Harian</td>
                 <td>Uang Lembur</td>
                 <td>Total</td>
@@ -145,6 +146,7 @@
             $totalDailyMoney = 0;
             $totalOvertimePay = 0;
             $takeHomePay = 0;
+            $totalMinutesOfDelay = 0;
             ?>
             @foreach($final_payslip->income as $income)
             <tr>
@@ -155,14 +157,21 @@
                 <td class="text-center">{{ $income->attendance->clock_in }}</td>
                 <td class="text-center">{{ $income->attendance->clock_out }}</td>
                 <td class="text-center">{{ $income->attendance->overtime }}</td>
+                @if($income->attendance->minutes_of_delay > 0)
+                <td class="text-center">{{ number_format($income->attendance->minutes_of_delay, 0, ",", ".") }} Menit</td>
+                @else
+                <td class="text-center"></td>
+                @endif
                 <td class="text-right">Rp {{ number_format($income->attendance->daily_money, 0, ",", ".") }}</td>
                 <td class="text-right">Rp {{ number_format($income->attendance->overtime_pay, 0, ",", ".") }}</td>
                 <td class="text-right">Rp {{ number_format($income->attendance->overtime_pay + $income->attendance->daily_money, 0, ",", ".") }}</td>
                 <?php
                 $totalDailyMoney += $income->attendance->daily_money;
                 $totalOvertimePay += $income->attendance->overtime_pay;
+                $totalMinutesOfDelay += $income->attendance->minutes_of_delay;
                 ?>
                 @else
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -177,6 +186,7 @@
         <tfoot>
             <tr>
                 <th class="text-left" colspan="6">TOTAL</th>
+                <th class="text-center">{{ number_format($totalMinutesOfDelay, 0, ",", ".") }} Menit</th>
                 <th class="text-right">Rp {{ number_format($totalDailyMoney, 0, ",", ".") }}</th>
                 <th class="text-right">Rp {{ number_format($totalOvertimePay, 0, ",", ".") }}</th>
                 <th class="text-right">Rp {{ number_format($totalDailyMoney + $totalOvertimePay, 0, ",", ".") }}</th>

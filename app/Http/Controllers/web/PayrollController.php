@@ -898,6 +898,34 @@ class PayrollController extends Controller
         }
     }
 
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function batchDestroy(Request $request)
+    {
+        try {
+            // $finalPayslip->delete();
+            $ids = json_decode($request->query('ids'));
+            FinalPayslip::query()->whereIn('id', $ids)->forceDelete();
+            return [
+                'data' => $request->all(),
+                'message' => 'data has been deleted',
+                'error' => false,
+                'code' => 200,
+            ];
+        } catch (Exception $e) {
+            return [
+                'message' => 'internal error',
+                'error' => true,
+                'code' => 500,
+                'errors' => $e,
+            ];
+        }
+    }
+
     public function print($id)
     {
         // $pdf = App::make('dompdf.wrapper');

@@ -396,10 +396,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [PayrollController::class, 'create']);
         Route::post('/', [PayrollController::class, 'store']);
         Route::get('/edit/{id}', [PayrollController::class, 'edit']);
-        Route::patch('/{id}', [PayrollController::class, 'update']);
-        Route::delete('/{id}', [PayrollController::class, 'destroy']);
         Route::get('/print/{id}', [PayrollController::class, 'print']);
         Route::get('/export/report/monthly', [PayrollController::class, 'exportMonthlyReport']);
+        Route::patch('/{id}', [PayrollController::class, 'update']);
+        Route::delete('/{id}', [PayrollController::class, 'destroy']);
+        Route::delete('/action/batch-delete', [PayrollController::class, 'batchDestroy']);
     });
 
     // Payroll
@@ -412,6 +413,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/print/{id}', [DailyPayrollController::class, 'print']);
         Route::get('/report/sheet', [DailyPayrollController::class, 'report']);
         Route::delete('/{id}', [DailyPayrollController::class, 'destroy']);
+        Route::delete('/action/batch-delete', [DailyPayrollController::class, 'batchDestroy']);
     });
 
     // Final Payslip

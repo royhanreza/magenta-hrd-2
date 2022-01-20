@@ -87,10 +87,26 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                             @endif
                         </div>
                         <div class="card-body">
+                            <div v-if="checkedRows.length > 0" class="text-right mb-4">
+                                <p class="mb-1"><strong><i class="fas fa-check text-success"></i> @{{ checkedRows.length }} item dipilih</strong></p>
+                                <div class="dropdown">
+                                    <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">
+                                        Batch Action
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                        <a class="dropdown-item" href="#" @click.prevent="batchDelete"><i class="fas fa-trash"></i> Hapus</a>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-bordered use-datatable">
                                     <thead class="bg-light text-center">
                                         <tr>
+                                            <th>
+                                                <label class="custom-control custom-checkbox" style="display: inline-block;">
+                                                    <input @change type="checkbox" v-model="checkedAll" class="custom-control-input"><span class="custom-control-label"></span>
+                                                </label>
+                                            </th>
                                             <th>Pegawai</th>
                                             <th>Job Title</th>
                                             <th>Periode</th>
@@ -102,6 +118,11 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                     <tbody>
                                         @foreach($payslips as $payslip)
                                         <tr>
+                                            <td>
+                                                <label class="custom-control custom-checkbox" style="display: inline-block;">
+                                                    <input type="checkbox" v-model="checkedRows" value="{{ $payslip->id }}" class="custom-control-input"><span class="custom-control-label"></span>
+                                                </label>
+                                            </td>
                                             <td><span>{{ $payslip->employee->first_name }} {{ $payslip->employee->last_name }} ({{ $payslip->employee->employee_id }})</span></td>
                                             @if(count($payslip->employee->careers) > 0)
                                             @if($payslip->employee->careers[0]->jobTitle !== null)
@@ -165,7 +186,9 @@ main js
     let app = new Vue({
         el: '#app',
         data: {
-
+            checkedAll: false,
+            checkedRows: [],
+            payslips: JSON.parse(String.raw `{!! $payslips !!}`),
         },
         methods: {
             deletePayslip: function(id) {
@@ -208,6 +231,78 @@ main js
                         })
                     }
                 })
+            },
+            batchDelete() {
+                let vm = this;
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Data akan dihapus" + ` (${ vm.checkedRows.length } item)`,
+                    icon: 'warning',
+                    reverseButtons: true,
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Hapus',
+                    cancelButtonText: 'Batal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        return axios.delete('/payroll/action/batch-delete' + '?ids=' + JSON.stringify(vm.checkedRows))
+                            .then(function(response) {
+                                console.log(response.data);
+                            })
+                            .catch(function(error) {
+                                console.log(error.data);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops',
+                                    text: 'Something wrong',
+                                })
+                            });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Data berhasil dihapus',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.reload();
+                            }
+                        })
+                    }
+                })
+            },
+            // checkAll() {
+            //     const payslipsIds = this.payslips.map(payslip => payslip.id);
+            //     if (!this.checkedAll) {
+            //         this.checkedRows = payslipsIds;
+            //     } else {
+            //         this.checkedRows = [];
+            //     }
+            // },
+        },
+        watch: {
+            checkedAll(val) {
+                const payslipsIds = this.payslips.map(payslip => payslip.id);
+                const checkedLength = this.checkedRows.length;
+                if (val) {
+                    this.checkedRows = payslipsIds;
+                } else {
+                    if (checkedLength >= this.payslips.length) {
+                        this.checkedRows = [];
+                    }
+
+                }
+            },
+            checkedRows(val) {
+                const checkedLength = val.length;
+                if (checkedLength == this.payslips.length) {
+                    this.checkedAll = true;
+                } else {
+                    this.checkedAll = false;
+                }
             }
         }
     })
@@ -215,6 +310,10 @@ main js
 <script>
     $(function() {
         $('table.use-datatable').DataTable({
+            columnDefs: [{
+                orderable: false,
+                targets: 0
+            }],
             "order": [
                 [4, "asc"]
             ]

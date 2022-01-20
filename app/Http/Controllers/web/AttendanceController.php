@@ -1279,6 +1279,9 @@ class AttendanceController extends Controller
                         $morningBottomRange = date('H:i:s', strtotime('06:00:00'));
                         $morningUpperRange = date('H:i:s', strtotime('08:00:00'));
 
+                        $nightBottomRange = date('H:i:s', strtotime('18:00:00'));
+                        $nightUpperRange = date('H:i:s', strtotime('20:00:00'));
+
                         // $nightBottomRange = date('19:00:00');
                         // $nightUpperRange = date('20:00:00');
 
@@ -1288,10 +1291,9 @@ class AttendanceController extends Controller
 
                         if ($checkHour > $morningBottomRange && $checkHour <= $morningUpperRange) {
                             $newCheckClock = date('Y-m-d 08:00:00', strtotime($clock));
+                        } else if ($checkHour > $nightBottomRange && $checkHour <= $nightUpperRange) {
+                            $newCheckClock = date('Y-m-d 20:00:00', strtotime($clock));
                         }
-                        //  else if ($checkHour > $nightBottomRange && $checkHour <= $nightUpperRange) {
-                        //     $newCheckClock = date('Y-m-d 20:00:00', strtotime($clock));
-                        // }
 
                         try {
                             $attendance->employee_id = $employee_id;
@@ -1467,6 +1469,9 @@ class AttendanceController extends Controller
                         $morningBottomRange = date('H:i:s', strtotime('06:00:00'));
                         $morningUpperRange = date('H:i:s', strtotime('08:00:00'));
 
+                        $nightBottomRange = date('H:i:s', strtotime('18:00:00'));
+                        $nightUpperRange = date('H:i:s', strtotime('20:00:00'));
+
                         // $nightBottomRange = date('19:00:00');
                         // $nightUpperRange = date('20:00:00');
 
@@ -1476,6 +1481,8 @@ class AttendanceController extends Controller
 
                         if ($checkHour > $morningBottomRange && $checkHour <= $morningUpperRange) {
                             $newCheckClock = date('Y-m-d 08:00:00', strtotime($clock));
+                        } else if ($checkHour > $nightBottomRange && $checkHour <= $nightUpperRange) {
+                            $newCheckClock = date('Y-m-d 20:00:00', strtotime($clock));
                         }
 
                         try {
@@ -1627,6 +1634,9 @@ class AttendanceController extends Controller
                         $morningBottomRange = date('H:i:s', strtotime('06:00:00'));
                         $morningUpperRange = date('H:i:s', strtotime('08:00:00'));
 
+                        $nightBottomRange = date('H:i:s', strtotime('06:00:00'));
+                        $nightUpperRange = date('H:i:s', strtotime('08:00:00'));
+
                         // $nightBottomRange = date('19:00:00');
                         // $nightUpperRange = date('20:00:00');
 
@@ -1636,10 +1646,9 @@ class AttendanceController extends Controller
 
                         if ($checkHour > $morningBottomRange && $checkHour <= $morningUpperRange) {
                             $newCheckClock = date('Y-m-d 08:00:00', strtotime($clock));
+                        } else if ($checkHour > $nightBottomRange && $checkHour <= $nightUpperRange) {
+                            $newCheckClock = date('Y-m-d 20:00:00', strtotime($clock));
                         }
-                        //  else if ($checkHour > $nightBottomRange && $checkHour <= $nightUpperRange) {
-                        //     $newCheckClock = date('Y-m-d 20:00:00', strtotime($clock));
-                        // }
 
                         try {
                             $attendance->employee_id = $employee_id;
@@ -1815,6 +1824,9 @@ class AttendanceController extends Controller
                         $morningBottomRange = date('H:i:s', strtotime('06:00:00'));
                         $morningUpperRange = date('H:i:s', strtotime('08:00:00'));
 
+                        $nightBottomRange = date('H:i:s', strtotime('18:00:00'));
+                        $nightUpperRange = date('H:i:s', strtotime('20:00:00'));
+
                         // $nightBottomRange = date('19:00:00');
                         // $nightUpperRange = date('20:00:00');
 
@@ -1824,6 +1836,8 @@ class AttendanceController extends Controller
 
                         if ($checkHour > $morningBottomRange && $checkHour <= $morningUpperRange) {
                             $newCheckClock = date('Y-m-d 08:00:00', strtotime($clock));
+                        } else if ($checkHour > $nightBottomRange && $checkHour <= $nightUpperRange) {
+                            $newCheckClock = date('Y-m-d 20:00:00', strtotime($clock));
                         }
 
                         try {

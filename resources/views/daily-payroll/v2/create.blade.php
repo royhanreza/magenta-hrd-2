@@ -277,6 +277,7 @@
                                     <th>Masuk</th>
                                     <th>Pulang</th>
                                     <th>Lembur</th>
+                                    <th>Keterlambatan</th>
                                     <th>Gaji Harian</th>
                                     <th>Uang Lembur</th>
                                     <th>Total</th>
@@ -296,6 +297,10 @@
                                     <td v-else>-</td>
                                     <td v-if="payment.attendance !== null">@{{ String(payment.attendance.overtime).padStart(2, "0") }}:00:00</td>
                                     <td v-else>-</td>
+                                    <td v-if="payment.attendance !== null" class="text-center text-danger">
+                                        <span v-if="payment.attendance.minutes_of_delay > 0">@{{ payment.attendance.minutes_of_delay }} Menit</span>
+                                    </td>
+                                    <td v-else></td>
                                     <!-- <td v-if="payment.attendance !== null" class="text-right">@{{ Intl.NumberFormat('de-DE').format(payment.attendance.daily_money) }}</td> -->
                                     <td v-if="payment.attendance !== null">
                                         <div class="d-flex justify-content-end">

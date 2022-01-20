@@ -199,7 +199,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                     </tr>
                   </thead>
                   <tbody>
-                    <tr is="final-payslip" v-for="finalPayslip in finalPayslips" :key="finalPayslip.id" :id="finalPayslip.id" :name="finalPayslip.employee?.first_name" :ondelete="deletePayslip"></tr>
+                    <!-- <tr is="final-payslip" v-for="finalPayslip in finalPayslips" :key="finalPayslip.id" :id="finalPayslip.id" :name="finalPayslip.employee?.first_name" :ondelete="deletePayslip"></tr> -->
                     <tr is="payslip" v-for="career in careers" :key="career.id" :id="career.id" :name="career.employee.first_name" :checkedcareers.sync="checkedCareers" :onshowmodal="showModal"></tr>
                     @foreach($preview_payslips as $preview_payslip)
                     <!-- <tr>
@@ -213,6 +213,64 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                       <td class="text-center"><a href="#" class="btn btn-light btn-sm" data-toggle="modal" data-target="#exampleModalCenter"><i class="fas fa-eye"></i> Payslip</a></td>
                     </tr> -->
                     @endforeach
+                  </tbody>
+                </table>
+              </div>
+              <hr>
+              <div class="row align-items-center mt-5 mb-3">
+                <div class="col-lg-6 col-md-6">
+                  <h3>Slip gaji yang sudah dibuat</h3>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                  <div v-if="checkedFinalPayslips.length > 0" class="text-right mb-4">
+                    <p class="mb-1"><strong><i class="fas fa-check text-success"></i> @{{ checkedFinalPayslips.length }} item dipilih</strong></p>
+                    <div class="dropdown">
+                      <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">
+                        Batch Action
+                      </button>
+                      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="#" @click.prevent="batchDelete"><i class="fas fa-trash"></i> Hapus</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-bordered use-datatable">
+                  <thead>
+                    <tr>
+                      <th class="text-center">
+                        <label class="custom-control custom-checkbox" style="display: inline-block;">
+                          <input type="checkbox" v-model="checkedAllCreated" class="custom-control-input"><span class="custom-control-label"></span>
+                        </label>
+                      </th>
+                      <th class="text-center">Pegawai</th>
+                      <th class="text-center">Status</th>
+                      <th class="text-center">Slip</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- <tr is="final-payslip" v-for="finalPayslip in finalPayslips" :key="finalPayslip.id" :id="finalPayslip.id" :name="finalPayslip.employee?.first_name" :ondelete="deletePayslip"></tr> -->
+                    <tr v-for="finalPayslip in finalPayslips">
+                      <td class="text-center" style="width: 60px;">
+                        <label class="custom-control custom-checkbox" style="display: inline-block;">
+                          <input type="checkbox" v-model="checkedFinalPayslips" :value="finalPayslip.id" class="custom-control-input"><span class="custom-control-label"></span>
+                        </label>
+                      </td>
+                      <td>@{{ finalPayslip.employee.first_name }}</td>
+                      <td class="text-center"><i class="fas fa-check-circle text-success"></i> Sudah Dibuat</td>
+                      <td class="text-center">
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                          <a :href="'/payroll/print/' + finalPayslip.id" target="_blank" class="btn btn-light btn-sm"><i class="fas fa-print"></i></a>
+                          @if(in_array("deleteMonthlySalary", $userLoginPermissions))
+                          <a href="#" @click.prevent="ondelete(id)" class="btn btn-light btn-sm"><i class="fas fa-trash-alt"></i></a>
+                          @endif
+                          @if(in_array("editMonthlySalary", $userLoginPermissions))
+                          <a :href="'/final-payslip/setting/' + finalPayslip.id" class="btn btn-light btn-sm"><i class="fas fa-cog"></i></a>
+                          @endif
+                        </div>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -456,7 +514,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
     template: `
     <tr>
       <td class="text-center" style="width: 60px;">
-
+        <label class="custom-control custom-checkbox" style="display: inline-block;">
+          <input type="checkbox" v-model="" :value="id" class="custom-control-input"><span class="custom-control-label"></span>
+        </label>
       </td>
       <td>@{{ name }}</td>
       <td class="text-center"><i class="fas fa-check-circle text-success"></i> Sudah Dibuat</td>
@@ -491,7 +551,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
       payslipId: '{{ $payslip->id }}',
       loadingCreatePayslip: false,
       startDatePeriod: `{{ $start_date_period }}`,
-      endDatePeriod: `{{ $end_date_period }}`
+      endDatePeriod: `{{ $end_date_period }}`,
+      checkedAllCreated: false,
+      checkedFinalPayslips: [],
     },
     methods: {
       createFinalPayslip: function() {
@@ -544,6 +606,48 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
           showLoaderOnConfirm: true,
           preConfirm: () => {
             return axios.delete('/final-payslip/' + id)
+              .then(function(response) {
+                console.log(response.data);
+              })
+              .catch(function(error) {
+                console.log(error.data);
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Oops',
+                  text: 'Something wrong',
+                })
+              });
+          },
+          allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: 'Data berhasil dihapus',
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.reload();
+              }
+            })
+          }
+        })
+      },
+      batchDelete() {
+        let vm = this;
+        Swal.fire({
+          title: 'Apakah anda yakin?',
+          text: "Data akan dihapus" + ` (${ vm.checkedFinalPayslips.length } item)`,
+          icon: 'warning',
+          reverseButtons: true,
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Hapus',
+          cancelButtonText: 'Batal',
+          showLoaderOnConfirm: true,
+          preConfirm: () => {
+            return axios.delete('/daily-payroll/action/batch-delete' + '?ids=' + JSON.stringify(vm.checkedFinalPayslips))
               .then(function(response) {
                 console.log(response.data);
               })
@@ -649,6 +753,28 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
       //     this.lastName = names[names.length - 1]
       //   }
       // }
+    },
+    watch: {
+      checkedAllCreated(val) {
+        const payslipsIds = this.finalPayslips.map(payslip => payslip.id);
+        const checkedLength = this.checkedFinalPayslips.length;
+        if (val) {
+          this.checkedFinalPayslips = payslipsIds;
+        } else {
+          if (checkedLength >= this.finalPayslips.length) {
+            this.checkedFinalPayslips = [];
+          }
+
+        }
+      },
+      checkedFinalPayslips(val) {
+        const checkedLength = val.length;
+        if (checkedLength == this.finalPayslips.length) {
+          this.checkedAllCreated = true;
+        } else {
+          this.checkedAllCreated = false;
+        }
+      }
     }
   })
 </script>

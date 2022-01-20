@@ -631,10 +631,13 @@ class EmployeeController extends Controller
             abort(500, $th);
         }
 
-        if (!in_array("staffSalary", $permissions)) {
-            abort(401, 'Akses ditolak');
-        }
         $employee = Employee::findOrFail($id);
+
+        if ($employee->type == 'staff') {
+            if (!in_array("staffSalary", $permissions)) {
+                abort(401, 'Akses ditolak');
+            }
+        }
         $lastCareer = Career::with(['designation', 'department', 'jobTitle'])->find(DB::table('careers')->where('employee_id', $id)->max('id'));
         $careers = Career::with(['payslips', 'department', 'designation', 'jobTitle'])->where('employee_id', $id)->orderByDesc('effective_date')->get();
 
@@ -650,11 +653,13 @@ class EmployeeController extends Controller
             abort(500, $th);
         }
 
-        if (!in_array("staffSalary", $permissions)) {
-            abort(401, 'Akses ditolak');
+        $employee = Employee::findOrFail($id);
+        if ($employee->type == 'staff') {
+            if (!in_array("staffSalary", $permissions)) {
+                abort(401, 'Akses ditolak');
+            }
         }
 
-        $employee = Employee::findOrFail($id);
         $lastCareer = Career::with(['designation', 'department', 'jobTitle'])->find(DB::table('careers')->where('employee_id', $id)->max('id'));
         // $career = Career::with(['payslips'])->where('employee_id', $id)->first();
 

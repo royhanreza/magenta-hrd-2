@@ -279,6 +279,34 @@ class DailyPayrollController extends Controller
         }
     }
 
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function batchDestroy(Request $request)
+    {
+        try {
+            // $finalPayslip->delete();
+            $ids = json_decode($request->query('ids'));
+            FinalPayslip::query()->whereIn('id', $ids)->forceDelete();
+            return [
+                'data' => $request->all(),
+                'message' => 'data has been deleted',
+                'error' => false,
+                'code' => 200,
+            ];
+        } catch (Exception $e) {
+            return [
+                'message' => 'internal error',
+                'error' => true,
+                'code' => 500,
+                'errors' => $e,
+            ];
+        }
+    }
+
     public function generate(Request $request)
     {
         // $startDatePeriod = $request->startDatePeriod;
@@ -525,32 +553,53 @@ class DailyPayrollController extends Controller
                 $workingHours = Carbon::parse($clockIn)->diffInHours($clockOut);
                 // $overtime = 0;
                 $dayStatus = '';
+                $currentDayShift = null;
+
+                $dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
                 if (count($employee->officeShifts) > 0) {
-                    // Carbon::parse($employee->office_shifts[0]->)->diffInHours($clockOut);
-                    if (date('l', strtotime($key)) == 'Monday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['monday'];
-                        $dayStatus = $employee->officeShifts[0]->monday_status;
-                    } else if (date('l', strtotime($key)) == 'Tuesday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['tuesday'];
-                        $dayStatus = $employee->officeShifts[0]->tuesday_status;
-                    } else if (date('l', strtotime($key)) == 'Wednesday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['wednesday'];
-                        $dayStatus = $employee->officeShifts[0]->wednesday_status;
-                    } else if (date('l', strtotime($key)) == 'Thursday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['thursday'];
-                        $dayStatus = $employee->officeShifts[0]->thursday_status;
-                    } else if (date('l', strtotime($key)) == 'Friday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['friday'];
-                        $dayStatus = $employee->officeShifts[0]->friday_status;
-                    } else if (date('l', strtotime($key)) == 'Saturday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['saturday'];
-                        $dayStatus = $employee->officeShifts[0]->saturday_status;
-                    } else if (date('l', strtotime($key)) == 'Sunday') {
-                        // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['sunday'];
-                        $dayStatus = $employee->officeShifts[0]->sunday_status;
+                    foreach ($dayNames as $day) {
+                        $lowerDay = strtolower($day);
+                        if (date('l', strtotime($key)) == $day) {
+                            // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['monday'];
+                            $dayStatus = $employee->officeShifts[0][$lowerDay . '_status'];
+                            $currentDayShift = [
+                                'time_in' => $employee->officeShifts[0][$lowerDay . '_in_time'],
+                                'time_out' =>  $employee->officeShifts[0][$lowerDay . '_out_time'],
+                            ];
+                        }
                     }
                 }
+
+                // if (count($employee->officeShifts) > 0) {
+                //     // Carbon::parse($employee->office_shifts[0]->)->diffInHours($clockOut);
+                //     if (date('l', strtotime($key)) == 'Monday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['monday'];
+                //         $dayStatus = $employee->officeShifts[0]->monday_status;
+                //         $currentDayShift = [
+                //             'time_in' => $employee->officeShifts[0]->monday_in_time,
+                //             'time_out' =>  $employee->officeShifts[0]->monday_out_time,
+                //         ];
+                //     } else if (date('l', strtotime($key)) == 'Tuesday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['tuesday'];
+                //         $dayStatus = $employee->officeShifts[0]->tuesday_status;
+                //     } else if (date('l', strtotime($key)) == 'Wednesday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['wednesday'];
+                //         $dayStatus = $employee->officeShifts[0]->wednesday_status;
+                //     } else if (date('l', strtotime($key)) == 'Thursday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['thursday'];
+                //         $dayStatus = $employee->officeShifts[0]->thursday_status;
+                //     } else if (date('l', strtotime($key)) == 'Friday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['friday'];
+                //         $dayStatus = $employee->officeShifts[0]->friday_status;
+                //     } else if (date('l', strtotime($key)) == 'Saturday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['saturday'];
+                //         $dayStatus = $employee->officeShifts[0]->saturday_status;
+                //     } else if (date('l', strtotime($key)) == 'Sunday') {
+                //         // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['sunday'];
+                //         $dayStatus = $employee->officeShifts[0]->sunday_status;
+                //     }
+                // }
 
                 // Get Calendar At Current Date
                 $calendar = collect($calendars)->filter(function ($item) use ($key) {
@@ -587,9 +636,23 @@ class DailyPayrollController extends Controller
                     }
                 }
 
+                $clock = date('H:i:s', strtotime($clockIn));
                 $minutesOfDelay = 0;
                 $upperLimit = date('H:i:s', strtotime('08:00:00'));
-                $clock = date('H:i:s', strtotime($clockIn));
+                if ($currentDayShift !== null) {
+                    $upperLimit = date('H:i:s', strtotime($currentDayShift['time_in']));
+                }
+
+                // If clock in is at night
+                $nightBottomRange = date('Y-m-d H:i:s', strtotime(date("Y-m-d") . ' 18:00:00'));
+                $nightUpperRange = date('Y-m-d H:i:s', strtotime(date("Y-m-d") . ' 04:00:00' . '+1 days'));
+
+                // echo $nightUpperRange;
+                $clockWithDate = date('Y-m-d H:i:s', strtotime(date("Y-m-d") . ' ' . $clock));
+                if ($clockWithDate >= $nightBottomRange && $clockWithDate <= $nightUpperRange) {
+                    $upperLimit = date('H:i:s', strtotime('20:00:00'));
+                }
+
 
                 if ($category == 'present') {
                     if ($clock > $upperLimit) {
@@ -614,6 +677,7 @@ class DailyPayrollController extends Controller
                     'overtime_pay' => $overtimePay,
                     'category' => $category,
                     'minutes_of_delay' => $minutesOfDelay,
+                    'upper_limit' => $upperLimit,
                     // 'note' => $note,
                     // 'images' => $images,
                 ];
