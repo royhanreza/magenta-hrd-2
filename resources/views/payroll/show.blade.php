@@ -128,6 +128,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                       <select @change="navigate" v-model="year" class="form-control" :disabled="isNavigating">
                         <option value="2020">2020</option>
                         <option value="2021">2021</option>
+                        <option value="2022">2022</option>
                       </select>
                       <!-- <div class="input-group-append">
                         <button class="btn btn-outline-light btn-sm" type="button"><i class="fas fa-angle-right"></i></button>

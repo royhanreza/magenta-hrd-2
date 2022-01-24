@@ -70,7 +70,6 @@ class LeaveController extends Controller
         });
         // return $permissions;
 
-        return $employees;
         return view('leave.v2.index', ['employees' => $employees]);
     }
 

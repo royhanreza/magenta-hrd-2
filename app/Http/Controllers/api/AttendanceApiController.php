@@ -986,7 +986,7 @@ class AttendanceApiController extends Controller
                 ], 500);
             }
         }
-        
+
         $intervalLimit = 60 * 4;
 
         $checkDiff = Carbon::parse($newestAttendance->global_clock)->diffInMinutes($clock);
@@ -1303,6 +1303,35 @@ class AttendanceApiController extends Controller
             ], 500);
         }
     }
-    
-    
+
+    public function updateOvertimeNote(Request $request, $id)
+    {
+        $attendance = Attendance::find($id);
+
+        if (is_null($attendance)) {
+            return response()->json([
+                'message' => 'timesheet not found',
+                'error' => true,
+                'code' => 404,
+            ], 400);
+        }
+
+        try {
+            $attendance->overtime_note = $request->overtime_note;
+
+            $attendance->save();
+            return response()->json([
+                'message' => 'overtime note has been updated',
+                'error' => false,
+                'code' => 200,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'internal error',
+                'error' => true,
+                'code' => 500,
+                'errors' => $e,
+            ], 500);
+        }
+    }
 }

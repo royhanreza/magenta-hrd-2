@@ -130,11 +130,13 @@ class DivisionApiController extends Controller
             $item['overtime_duration'] = 0;
             $item['checkout_id'] = null;
             $item['note'] = null;
+            $item['overtime_note'] = null;
             $item['images'] = [];
 
             if (count($item->attendances) > 0) {
                 foreach ($item->attendances as $att) {
                     $item['note'] = $att->note;
+                    $item['overtime_note'] = $att->overtime_note;
                     if ($att->image || isset($att->image)) {
                         $item['images'] = array_merge($item['images'], [$att->image]);
                     }
@@ -275,11 +277,13 @@ class DivisionApiController extends Controller
             $item['overtime_duration'] = 0;
             $item['checkout_id'] = null;
             $item['note'] = null;
+            $item['overtime_note'] = null;
             $item['images'] = [];
 
             if (count($item->attendances) > 0) {
                 foreach ($item->attendances as $att) {
                     $item['note'] = $att->note;
+                    $item['overtime_note'] = $att->overtime_note;
                     if ($att->image || isset($att->image)) {
                         $item['images'] = array_merge($item['images'], [$att->image]);
                     }

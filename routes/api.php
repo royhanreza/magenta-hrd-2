@@ -134,11 +134,12 @@ Route::prefix('attendances')->group(function () {
     Route::get('/{id}', [AttendanceApiController::class, 'show']);
     Route::post('/{id}/approve', [AttendanceApiController::class, 'approve']);
     Route::post('/{id}/reject', [AttendanceApiController::class, 'reject']);
-    Route::patch('/{id}/update-overtime', [AttendanceApiController::class, 'updateOvertime']);
     Route::post('/action/check-in', [AttendanceApiController::class, 'checkIn']);
     Route::post('/action/check-out', [AttendanceApiController::class, 'checkOut']);
     Route::post('/action/check-out', [AttendanceApiController::class, 'checkOut']);
     Route::post('/action/hardware', [AttendanceApiController::class, 'hardwareExperiment']);
+    Route::patch('/{id}/update-overtime', [AttendanceApiController::class, 'updateOvertime']);
+    Route::patch('/{id}/update-overtime-note', [AttendanceApiController::class, 'updateOvertimeNote']);
     // Route::get('/{id}', [EventApiController::class, 'getAllBudgets']);
 });
 

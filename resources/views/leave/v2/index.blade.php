@@ -69,6 +69,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                 <table class="table table-bordered table-striped use-datatable">
                                     <thead class="bg-light text-center">
                                         <?php $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] ?>
+                                        <?php $alliasMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'] ?>
                                         <tr>
                                             <th rowspan="2">Nama Pegawai</th>
                                             <!-- <th>Jenis Izin</th> -->
@@ -82,7 +83,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                             <th rowspan="2">Action</th>
                                         </tr>
                                         <tr>
-                                            @foreach($months as $month)
+                                            @foreach($alliasMonths as $month)
                                             <td>{{ $month }}</td>
                                             @endforeach
                                         </tr>

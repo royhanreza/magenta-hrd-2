@@ -11,7 +11,7 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('vendor/datatables/css/fixedHeader.bootstrap4.css') }}"> -->
 @endsection
 
-@section('title', 'Magenta HRD')
+@section('title', 'Absensi | Magenta HRD')
 
 @section('pagestyle')
 <style>
