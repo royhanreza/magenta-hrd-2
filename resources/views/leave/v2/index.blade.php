@@ -69,7 +69,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                 <table class="table table-bordered table-striped use-datatable">
                                     <thead class="bg-light text-center">
                                         <?php $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] ?>
-                                        <?php $alliasMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'] ?>
+                                        <?php $alliasMonths = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] ?>
                                         <tr>
                                             <th rowspan="2">Nama Pegawai</th>
                                             <!-- <th>Jenis Izin</th> -->
@@ -95,11 +95,13 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                                 <span>{{ $employee->first_name }}<br><small>{{ $employee->employee_id }}</small></span>
                                             </td>
                                             <td class="text-center">{{ $employee->activeLeave->total_leave }}</td>
+                                            <?php $newTakenLeave = 0; ?>
                                             @foreach($months as $index => $month)
                                             <td class="text-center">
                                                 <?php
                                                 if (isset($employee->leave_monthly)) {
                                                     if (isset($employee->leave_monthly[$index + 1])) {
+                                                        $newTakenLeave += $employee->leave_monthly[$index + 1];
                                                         echo $employee->leave_monthly[$index + 1];
                                                     } else {
                                                         echo '-';
@@ -110,8 +112,8 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                                 ?>
                                             </td>
                                             @endforeach
-                                            <td class="text-center">{{ $employee->activeLeave->taken_leave }}</td>
-                                            <td class="text-center">{{ $employee->activeLeave->total_leave - $employee->activeLeave->taken_leave }}</td>
+                                            <td class="text-center">{{ $newTakenLeave }}</td>
+                                            <td class="text-center">{{ $employee->activeLeave->total_leave - $newTakenLeave }}</td>
                                             <td class="text-center">
                                                 @if(in_array("editLeaveData", $userLoginPermissions))
                                                 <button class="btn btn-light btn-sm" @click="openEditLeaveModal({{ $employee->activeLeave->id }}, {{ $employee->activeLeave->total_leave }},{{ $employee->activeLeave->taken_leave }}, {{ $employee->activeLeave->total_carry_forward }})"><i class="fas fa-pencil-alt"></i></button>
@@ -154,14 +156,14 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
             <div class="modal-body">
                 <form @submit.prevent="editLeave(editLeaveId)">
                     <div class="form-row">
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-12">
                             <label>Jatah Cuti</label>
                             <input type="number" v-model="leaveModel.edit.totalLeave" class="form-control form-control-sm">
                         </div>
-                        <div class="form-group col-md-6">
+                        <!-- <div class="form-group col-md-6">
                             <label>Cuti Diambil</label>
                             <input type="number" v-model="leaveModel.edit.takenLeave" class="form-control form-control-sm">
-                        </div>
+                        </div> -->
                         <!--<div class="form-group col-md-6">-->
                         <!--  <label>Jatah Carry Forward</label>-->
                         <!--  <input type="number" v-model="leaveModel.edit.totalCarryForward" class="form-control form-control-sm">-->

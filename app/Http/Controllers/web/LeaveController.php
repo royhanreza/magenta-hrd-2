@@ -71,6 +71,7 @@ class LeaveController extends Controller
             $employee->leave_monthly = $leaveSubmissionsMonthly;
         });
         // return $permissions;
+        // return $employees;
 
         return view('leave.v2.index', ['employees' => $employees]);
     }
