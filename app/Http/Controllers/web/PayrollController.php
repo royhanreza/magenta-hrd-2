@@ -294,9 +294,9 @@ class PayrollController extends Controller
 
                 $previewPayslip['remaining_leaves'] = $remainingLeaves;
 
-                if ($remainingLeaves > 0) {
-                    $remainingLeaves -= $massLeaveCount;
-                }
+                // if ($remainingLeaves > 0) {
+                //     $remainingLeaves -= $massLeaveCount;
+                // }
 
                 $excessLeave = $remainingLeaves - $nullAttendanceWorkDay;
                 $previewPayslip['excess_leave'] = 0;
@@ -342,7 +342,7 @@ class PayrollController extends Controller
             $previewPayslip['presence_incentive'] = $presenceIncentive;
             // $employee['payslip_name'] = 'Slip Gaji Periode ' . date_format(date_create($startDatePeriod), "d/m/Y") . ' - ' . date_format(date_create($endDatePeriod), "d/m/Y");
         }
-        // return $previewPayslips;
+        // return $previewPayslips[10];
 
 
 

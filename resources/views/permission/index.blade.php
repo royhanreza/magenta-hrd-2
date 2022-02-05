@@ -62,11 +62,35 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
               <h5 class="card-header-title">Daftar Pengajuan Izin</h5>
               @if(in_array("addPermissionSubmission", $userLoginPermissions))
               <div class="toolbar ml-auto">
+                <a class="btn btn-dark btn-sm" data-toggle="collapse" href="#filterCollapse" role="button" aria-expanded="false" aria-controls="filterCollapse"><i class="fas fa-fw fa-filter"></i> Filter</a>
                 <a href="{{ url('permission/create') }}" class="btn btn-primary btn-sm"><i class="fas fa-fw fa-plus"></i> Add New</a>
               </div>
               @endif
             </div>
             <div class="card-body">
+              <div class="collapse" id="filterCollapse">
+                <div class="card card-body">
+                  <h4>Filter</h4>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group row">
+                        <label for="statusFilter" class="col-sm-2 col-form-label">Status</label>
+                        <div class="col-sm-10">
+                          <select v-model="filter.status" id="filter-status" class="form-control">
+                            <option value="">Semua</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved (Diterima)</option>
+                            <option value="rejected">Rejected (Ditolak)</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <button class="btn btn-primary btn-sm btn-apply-filter">Terapkan</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="table-responsive">
                 <table class="table table-bordered use-datatable">
                   <thead class="bg-light text-center">
@@ -83,67 +107,6 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach($permissions as $permission)
-                    <tr>
-                      <td>
-                        <div class="row">
-                          <div class="col-md-3">
-                            <img src="{{ ($permission->employee->photo !== null) ? Storage::disk('s3')->url($permission->employee->photo) : 'https://cabdindikwil1.com/wp-content/uploads/2020/12/male.png' }}" alt="" width="45" class="rounded">
-                          </div>
-                          <div class="col-md-9">
-                            <span>{{ $permission->employee->first_name }}<br><small>{{ $permission->employee->employee_id }}</small></span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{{ ($permission->permissionCategory == null) ? '' : $permission->permissionCategory->name }}</td>
-                      <td class="text-center">{{ $permission->date_of_filing }}</td>
-                      <td class="text-center">{{ $permission->number_of_days }} Hari</td>
-                      <td>{{ $permission->permission_dates }}</td>
-                      <td class="text-center">
-                        @if($permission->status == 'approved')
-                        <span class="badge badge-success">Approved</span>
-                        @elseif($permission->status == 'pending')
-                        <span class="badge badge-warning">Pending</span>
-                        @else
-                        <span class="badge badge-danger">Rejected</span>
-                        @endif
-                      </td>
-                      <td>{{ $permission->description }}</td>
-                      <td class="text-center">
-                        @if($permission->status == 'pending')
-                        @if(in_array("approvalPermisionSubmission", $userLoginPermissions))
-                        <div class="btn-group" role="group" aria-label="Action Buttons">
-                          <button type="button" @click="rejectPermissionSubmission({{$permission->id}})" class="btn btn-sm btn-light"><i class="fas fa-fw fa-times"></i></a>
-                            <button type="button" @click="approvePermissionSubmission({{$permission->id}})" class="btn btn-sm btn-light btn-delete"><i class="fas fa-fw fa-check"></i></button>
-                            <!-- <div class="dropdown">
-                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Other">
-                              <i class="fas fa-fw fa-cog"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                              <a class="dropdown-item" href="#">Print</a>
-                            </div>
-                          </div> -->
-                        </div>
-                        @endif
-                        @endif
-                      </td>
-                      <td class="text-center">
-                        <div class="btn-group" role="group" aria-label="Action Buttons">
-                          @if($permission->status == 'pending')
-                          @if(in_array("editPermisionSubmission", $userLoginPermissions))
-                          <a href="/permission/edit/{{ $permission->id }}" class="btn btn-sm btn-light"><i class="fas fa-fw fa-pencil-alt"></i></a>
-                          @endif
-                          @if(in_array("deletePermisionSubmission", $userLoginPermissions))
-                          <button type="button" @click="deletePermissionSubmission({{$permission->id}})" class="btn btn-sm btn-light btn-delete"><i class="fas fa-fw fa-trash"></i></button>
-                          @endif
-                          @endif
-                          @if($permission->attachment !== null)
-                          <a href="{{ Storage::disk('s3')->url($permission->attachment) }}" target="_blank" class="btn btn-sm btn-light"><i class="fas fa-fw fa-file"></i></a>
-                          @endif
-                        </div>
-                      </td>
-                    </tr>
-                    @endforeach
                   </tbody>
                 </table>
               </div>
@@ -184,138 +147,259 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
   let app = new Vue({
     el: '#app',
     data: {
-
+      filter: {
+        status: 'pending'
+      }
     },
-    methods: {
-      deletePermissionSubmission: function(id) {
-        console.log(id)
-        // const id = $(this).attr('data-id');
-        Swal.fire({
-          title: 'Apakah anda yakin?',
-          text: "Data absensi di tanggal sakit akan dihapus",
-          icon: 'warning',
-          reverseButtons: true,
-          showCancelButton: true,
-          confirmButtonColor: '#3085d6',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel',
-          showLoaderOnConfirm: true,
-          preConfirm: () => {
-            return axios.delete('/api/permission-submissions/' + id)
-              .then(function(response) {
-                console.log(response.data);
-              })
-              .catch(function(error) {
-                console.log(error.data);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Oops',
-                  text: 'Something wrong',
-                })
-              });
-          },
-          allowOutsideClick: () => !Swal.isLoading()
-        }).then((result) => {
-          if (result.isConfirmed) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: 'Data has been deleted',
-            }).then((result) => {
-              if (result.isConfirmed) {
-                window.location.reload();
-              }
+    methods: {}
+  })
+</script>
+<script>
+  $(function() {
+    function deletePermissionSubmission(id) {
+      console.log(id)
+      // const id = $(this).attr('data-id');
+      Swal.fire({
+        title: 'Apakah anda yakin?',
+        text: "Data absensi di tanggal izin akan dihapus",
+        icon: 'warning',
+        reverseButtons: true,
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          return axios.delete('/api/permission-submissions/' + id)
+            .then(function(response) {
+              console.log(response.data);
             })
-          }
-        })
-      },
-      approvePermissionSubmission: function(id) {
-        console.log(id)
-        // const id = $(this).attr('data-id');
-        Swal.fire({
-          title: 'Apakah anda yakin?',
-          text: "Pengajuan izin akan disetujui",
-          icon: 'warning',
-          reverseButtons: true,
-          showCancelButton: true,
-          confirmButtonColor: '#2ec551',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'Approve',
-          cancelButtonText: 'Cancel',
-          showLoaderOnConfirm: true,
-          preConfirm: () => {
-            return axios.post('/api/permission-submissions/action/approve/' + id)
-              .then(function(response) {
-                console.log(response.data);
+            .catch(function(error) {
+              console.log(error.data);
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops',
+                text: 'Something wrong',
               })
-              .catch(function(error) {
-                console.log(error.data);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Oops',
-                  text: 'Something wrong',
-                })
-              });
-          },
-          allowOutsideClick: () => !Swal.isLoading()
-        }).then((result) => {
-          if (result.isConfirmed) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: 'Data has been approved',
-            }).then((result) => {
-              if (result.isConfirmed) {
-                window.location.reload();
-              }
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Data has been deleted',
+          })
+        }
+      })
+    }
+
+    function approvePermissionSubmission(id) {
+      console.log(id)
+      // const id = $(this).attr('data-id');
+      Swal.fire({
+        title: 'Apakah anda yakin?',
+        text: "Pengajuan izin akan disetujui",
+        icon: 'warning',
+        reverseButtons: true,
+        showCancelButton: true,
+        confirmButtonColor: '#2ec551',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Approve',
+        cancelButtonText: 'Cancel',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          return axios.post('/api/permission-submissions/action/approve/' + id)
+            .then(function(response) {
+              console.log(response.data);
             })
-          }
-        })
-      },
-      rejectPermissionSubmission: function(id) {
-        console.log(id)
-        // const id = $(this).attr('data-id');
-        Swal.fire({
-          title: 'Apakah anda yakin?',
-          text: "Pengajuan izin akan ditolak",
-          icon: 'warning',
-          reverseButtons: true,
-          showCancelButton: true,
-          // confirmButtonColor: '#2ec551',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
-          showLoaderOnConfirm: true,
-          preConfirm: () => {
-            return axios.post('/api/permission-submissions/action/reject/' + id)
-              .then(function(response) {
-                console.log(response.data);
+            .catch(function(error) {
+              console.log(error.data);
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops',
+                text: 'Something wrong',
               })
-              .catch(function(error) {
-                console.log(error.data);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Oops',
-                  text: 'Something wrong',
-                })
-              });
-          },
-          allowOutsideClick: () => !Swal.isLoading()
-        }).then((result) => {
-          if (result.isConfirmed) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: 'Data has been rejected',
-            }).then((result) => {
-              if (result.isConfirmed) {
-                window.location.reload();
-              }
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Data has been approved',
+          })
+        }
+      })
+    };
+
+    function rejectPermissionSubmission(id) {
+      console.log(id)
+      // const id = $(this).attr('data-id');
+      Swal.fire({
+        title: 'Apakah anda yakin?',
+        text: "Pengajuan izin akan ditolak",
+        icon: 'warning',
+        reverseButtons: true,
+        showCancelButton: true,
+        // confirmButtonColor: '#2ec551',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Reject',
+        cancelButtonText: 'Cancel',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          return axios.post('/api/permission-submissions/action/reject/' + id)
+            .then(function(response) {
+              console.log(response.data);
             })
-          }
-        })
-      },
+            .catch(function(error) {
+              console.log(error.data);
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops',
+                text: 'Something wrong',
+              })
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Data has been rejected',
+          })
+        }
+      })
+    }
+
+    $('.use-datatable').on('click', 'tr td .btn-delete', function(e) {
+      const id = $(this).attr('data-id');
+      if (!id) {
+        return alert('Missing ID')
+      }
+      deletePermissionSubmission(id);
+    })
+
+    $('.use-datatable').on('click', 'tr td .btn-approve', function(e) {
+      const id = $(this).attr('data-id');
+      if (!id) {
+        return alert('Missing ID')
+      }
+      approvePermissionSubmission(id);
+    })
+
+    $('.use-datatable').on('click', 'tr td .btn-reject', function(e) {
+      const id = $(this).attr('data-id');
+      if (!id) {
+        return alert('Missing ID')
+      }
+      rejectPermissionSubmission(id);
+    })
+
+    const datatable = $('table.use-datatable').DataTable({
+      "order": [
+        [1, "desc"]
+      ],
+      processing: true,
+      serverSide: true,
+      ajax: '/datatables/permission?status=pending',
+      columns: [{
+          data: 'employee.first_name',
+          name: 'employee.first_name',
+        },
+        {
+          data: 'permission_category.name',
+          name: 'permissionCategory.name',
+          className: 'text-center'
+        },
+        {
+          data: 'date_of_filing',
+          name: 'permissions.date_of_filing',
+          className: 'text-center'
+        },
+        {
+          data: 'permission_dates',
+          name: 'permissions.permission_dates',
+          render: function(data, type, row) {
+            return data.split(',').length;
+          },
+          className: 'text-center'
+        },
+        {
+          data: 'permission_dates',
+          name: 'permissions.permission_dates',
+          render: function(data, type, row) {
+            // return data.split(',').join(', ');
+            let dates = data.split(',');
+            if (dates.length > 0) {
+              let dateList = ``;
+              dates.forEach(date => {
+                dateList += `<li>${date}</li>`;
+              })
+              return `<ul>${dateList}</ul>`
+            }
+
+            return null;
+          },
+        },
+        {
+          data: 'status',
+          name: 'permissions.status',
+          render: function(data, type, row) {
+            let badgeType = 'primary';
+            if (data == 'pending') {
+              badgeType = 'warning';
+            } else if (data == 'approved') {
+              badgeType = 'success';
+            } else if (data == 'rejected') {
+              badgeType = 'danger';
+            }
+
+            return `<span class="badge badge-${badgeType} text-capitalize"><small>${data}</small></span>`
+          },
+          className: 'text-center'
+        },
+        {
+          data: 'description',
+          name: 'permissions.description',
+          className: 'text-center'
+        },
+        {
+          data: 'approval',
+          name: 'approval',
+          searchable: false,
+          className: 'text-center'
+        },
+        {
+          data: 'action',
+          name: 'action',
+          searchable: false,
+          className: 'text-center'
+        },
+      ]
+    });
+
+    $('.btn-apply-filter').on('click', function(e) {
+      // console.log(status);
+      // alert('clicked', status);
+      applyFitler();
+    })
+
+    const applyFitler = () => {
+      const queries = [];
+      const status = $('#filter-status').val();
+      if (status) {
+        queries.push('status=' + status);
+      }
+      const queryString = queries.join('&');
+
+      const url = '/datatables/permission?' + queryString;
+
+      datatable.ajax.url(url).load();
     }
   })
 </script>

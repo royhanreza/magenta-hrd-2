@@ -115,7 +115,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
             <div class="card-body">
               <h5 class="text-muted">Total Pegawai <span class="icon-circle-small icon-box-xs text-primary bg-primary-light"><i class="fa fa-fw fa-users"></i></span></h5>
               <div class="metric-value">
-                <h1 class="mb-1 text-right">{{ number_format($employees->total(), 0, "", ".") }}</h1>
+                <h1 class="mb-1 text-right">{{ number_format(count($all_employees), 0, "", ".") }}</h1>
               </div>
             </div>
           </div>
@@ -164,11 +164,14 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
         <!-- basic table  -->
         <!-- ============================================================== -->
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-          <div class="row mb-3">
+          <div class="row">
             <div class="col-md-6 col-xs-12">
               @if(in_array("addEmployee", $userLoginPermissions))
               <a href="{{ url('employee/create') }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus fa-xs"></i> Tambah Pegawai
+              </a>
+              <a href="#" class="btn btn-dark btn-sm" data-toggle="modal" data-target="#filterModal">
+                <i class="fas fa-filter fa-xs"></i> Filter
               </a>
               @endif
               <!-- <a href="{{ url('employee/export') }}" class="btn btn-success btn-sm">
@@ -228,6 +231,38 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
           @endfor
         </div> -->
           <!-- END:KELETON -->
+          <?php
+          $statusApplied = request()->query('status');
+          $filterUsed = $statusApplied !== null;
+          ?>
+          @if($filterUsed)
+          <div class="alert alert-info" role="alert">
+            <div style="display: flex; align-items: center;">
+              <div>
+                <i class="fas fa-filter"></i>
+              </div>
+              @if($statusApplied !== null)
+              <div class="mx-2">
+                <div class="bg-light px-3 py-2 rounded">
+                  Status:
+                  @if($statusApplied == '1')
+                  Aktif
+                  @elseif($statusApplied == '0')
+                  Nonaktif
+                  @else
+                  Semua status
+                  @endif
+                </div>
+              </div>
+              @endif
+              <!-- <div class="mx-2">
+                <div class="bg-light px-3 py-2 rounded">
+                  Job Title: Finishing
+                </div>
+              </div> -->
+            </div>
+          </div>
+          @endif
 
           <div class="row">
             @foreach($employees as $employee) <div class="col-md-6 col-xs-12">
@@ -325,7 +360,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
           </div>
           <span>Menampilkan <strong>{{ $employees->count() }}</strong> dari <strong>{{ $employees->total() }}</strong> Pegawai</span>
           <div class="d-flex justify-content-center">
-            {{ $employees->links() }}
+            {{ $employees->appends(['status' => request()->query('status')])->links() }}
           </div>
           <!-- <nav aria-label="Page navigation example">
           <ul class="pagination justify-content-center">
@@ -358,6 +393,57 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
   <!-- end footer -->
   <!-- ============================================================== -->
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filterModalLabel">Filter</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group row">
+          <label class="col-sm-4 col-form-label">Status</label>
+          <div class="col-sm-8">
+            <select v-model="filter.status" class="form-control">
+              <option value="all">Semua</option>
+              <option value="1">Aktif</option>
+              <option value="0">Nonaktif</option>
+            </select>
+          </div>
+        </div>
+        <!-- <div class="form-group row">
+          <label class="col-sm-4 col-form-label">Departemen</label>
+          <div class="col-sm-8">
+            <div class="mb-2">
+              <select v-model="filter.department" class="form-control">
+                <option value="all">Semua</option>
+                <option value="choices">Pilihan</option>
+              </select>
+            </div>
+            <div v-if="filter.department == 'choices'" style="max-height: 300px; overflow: auto;">
+              <?php $sortedDepartments = collect($departments)->sortBy('name')->values()->all() ?>
+              @foreach($sortedDepartments as $department)
+              <div>
+                <label class="custom-control custom-checkbox">
+                  <input type="checkbox" v-model="filter.departmentSelections" value="{{ $department->id }}" class="custom-control-input"><span class="custom-control-label">{{ $department->name }}</span>
+                </label>
+              </div>
+              @endforeach
+            </div>
+          </div>
+        </div> -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+        <button type="button" @click="applyFilter" class="btn btn-primary">Terapkan</button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- ============================================================== -->
 <!-- end wrapper  -->
 <!-- ============================================================== -->
@@ -380,9 +466,16 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
   let app = new Vue({
     el: '#app',
     data: {
-
+      filter: {
+        status: '{{ request()->query("status") !== null ? request()->query("status") : "all"  }}',
+        department: 'all',
+        departmentSelections: [],
+      }
     },
     methods: {
+      applyFilter() {
+        document.location.href = '/employee?status=' + this.filter.status;
+      },
       deleteEmployee: function(id) {
         Swal.fire({
           title: 'Are you sure?',

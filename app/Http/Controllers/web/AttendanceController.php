@@ -60,7 +60,7 @@ class AttendanceController extends Controller
             $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
         }, 'attendances' => function ($query) use ($date) {
             $query->where('date', $date);
-        }])->get();
+        }])->where('is_active', 1)->get();
 
         // return $attendances;
 
@@ -1677,105 +1677,162 @@ class AttendanceController extends Controller
                         $workingHours = Carbon::parse($newestAttendance->clock_in)->diffInHours($clock);
                         $workingMinutes = Carbon::parse($newestAttendance->clock_in)->diffInMinutes($clock);
                         $overtime = 0;
+                        $workAsOvertime = false;
+                        $maxWorkAsOvertime = 0;
                         $dayStatus = '';
                         $diffWorkingMinutes = 0;
 
-                        if (count($employee->officeShifts) > 0) {
+                        $dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+                        $employeeShifts = collect($employee->officeShifts)->filter(function ($shift) {
+                            return $shift->pivot->is_active == 1;
+                        })->values()->all();
+                        if (count($employeeShifts) > 0) {
                             // Carbon::parse($employee->office_shifts[0]->)->diffInHours($clockOut);
-                            if (date('l', strtotime($date)) == 'Monday') {
-                                // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['monday'];
-                                $shiftWorkingHours = $employee->officeShifts[0]->monday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
 
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
+                            $activeShift = $employeeShifts[0];
+                            foreach ($dayNames as $day) {
+                                $lowerDay = strtolower($day);
+                                if (date('l', strtotime($date)) == $day) {
+                                    // $shiftWorkingHours = $employee->officeShifts[0][$lowerDay . '_working_hours'];
+                                    // $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                                    // $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+                                    // $x = $diffWorkingMinutes % 30;
+                                    // $y = ($diffWorkingMinutes - $x) / 30;
+                                    $workAsOvertime = $activeShift[$lowerDay . '_work_as_overtime'] == 1 ? true : false;
+                                    $maxWorkAsOvertime = $activeShift[$lowerDay . '_max_overtime'];
 
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
-                                }
-                            } else if (date('l', strtotime($date)) == 'Tuesday') {
-                                // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['tuesday'];
-                                $shiftWorkingHours = $employee->officeShifts[0]->tuesday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+                                    // if ($y > 0) {
+                                    //     $z = ($diffWorkingMinutes - $x) - 30;
+                                    //     $overtime = 1 + floor($z / 60);
+                                    // }
+                                    // break;
+                                    // -------------------
+                                    $shiftOutTime = $activeShift[$lowerDay . '_out_time'];
+                                    $checkClock = Carbon::parse($clock)->toTimeString();
 
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
+                                    $diffShiftClock = 0;
+                                    if ($checkClock > $shiftOutTime) {
+                                        $diffShiftClock = Carbon::parse($checkClock)->diffInMinutes($shiftOutTime);
+                                    }
+                                    // 90
+                                    // array_push($tes, [
+                                    //     'shift_out_time' => $shiftOutTime,
+                                    //     'clock' => $checkClock,
+                                    // ]);
+                                    $x = $diffShiftClock % 30; // 0
+                                    $y = ($diffShiftClock - $x) / 30; // 3 
 
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
-                                }
-                            } else if (date('l', strtotime($date)) == 'Wednesday') {
-                                // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['wednesday'];
-                                $shiftWorkingHours = $employee->officeShifts[0]->wednesday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
-
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
-
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
-                                }
-                            } else if (date('l', strtotime($date)) == 'Thursday') {
-                                // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['thursday'];
-                                $shiftWorkingHours = $employee->officeShifts[0]->thursday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
-
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
-
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
-                                }
-                            } else if (date('l', strtotime($date)) == 'Friday') {
-                                // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['friday'];
-                                $shiftWorkingHours = $employee->officeShifts[0]->friday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
-
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
-
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
-                                }
-                            } else if (date('l', strtotime($date)) == 'Saturday') {
-                                // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['saturday'];
-                                $shiftWorkingHours = $employee->officeShifts[0]->saturday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
-
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
-
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
-                                }
-                            } else if (date('l', strtotime($date)) == 'Sunday') {
-                                $shiftWorkingHours = $employee->officeShifts[0]->sunday_working_hours;
-                                $shiftWorkingMinutes = $shiftWorkingHours * 60;
-                                $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
-
-                                $x = $diffWorkingMinutes % 30;
-                                $y = ($diffWorkingMinutes - $x) / 30;
-
-                                if ($y > 0) {
-                                    $z = ($diffWorkingMinutes - $x) - 30;
-                                    $overtime = 1 + floor($z / 60);
+                                    if ($y > 0) {
+                                        $z = ($diffShiftClock - $x) - 30; // (90 - 0) - 30 = 60
+                                        $overtime = 1 + floor($z / 60); // 1 + floor(60 / 60) = 2
+                                    }
+                                    break;
                                 }
                             }
+
+
+                            // if (date('l', strtotime($date)) == 'Monday') {
+                            //     // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['monday'];
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->monday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // } else if (date('l', strtotime($date)) == 'Tuesday') {
+                            //     // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['tuesday'];
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->tuesday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // } else if (date('l', strtotime($date)) == 'Wednesday') {
+                            //     // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['wednesday'];
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->wednesday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // } else if (date('l', strtotime($date)) == 'Thursday') {
+                            //     // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['thursday'];
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->thursday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // } else if (date('l', strtotime($date)) == 'Friday') {
+                            //     // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['friday'];
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->friday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // } else if (date('l', strtotime($date)) == 'Saturday') {
+                            //     // $overtime = $workingHours - $this->getShiftWorkingHours($employee)['saturday'];
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->saturday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // } else if (date('l', strtotime($date)) == 'Sunday') {
+                            //     $shiftWorkingHours = $employee->officeShifts[0]->sunday_working_hours;
+                            //     $shiftWorkingMinutes = $shiftWorkingHours * 60;
+                            //     $diffWorkingMinutes = $workingMinutes - $shiftWorkingMinutes;
+
+                            //     $x = $diffWorkingMinutes % 30;
+                            //     $y = ($diffWorkingMinutes - $x) / 30;
+
+                            //     if ($y > 0) {
+                            //         $z = ($diffWorkingMinutes - $x) - 30;
+                            //         $overtime = 1 + floor($z / 60);
+                            //     }
+                            // }
                         }
 
                         $overtime = ($overtime > 0) ? $overtime : 0;
+
+                        if ($workAsOvertime) {
+                            $overtime = $workingHours;
+                            if ($overtime > $maxWorkAsOvertime) {
+                                $overtime = $maxWorkAsOvertime;
+                            }
+                        }
 
                         if ($newestAttendance->category == 'present') {
 
@@ -1799,6 +1856,7 @@ class AttendanceController extends Controller
                                 $attendance->type = "check out";
                                 $attendance->category = 'present';
                                 $attendance->status = 'approved';
+                                // $attendance->approval_note = 'WORKING HOURS: ' . $workingHours . ', AS OVERTIME: ' . ($workAsOvertime ? '1' : '0') . ' SHIFT:';
                                 $attendance->overtime_duration = $overtime;
                                 $attendance->save();
                                 continue;
@@ -1866,7 +1924,7 @@ class AttendanceController extends Controller
                     'data' => [
                         // 'imported_data' => $importData,
                         // 'final_imported_data' => $finalImportData,
-                        // 'tes' => $tes,
+                        'tes' => $tes,
                         'message' => 'OK',
                     ],
                 ], 200);
@@ -1875,6 +1933,7 @@ class AttendanceController extends Controller
                     'message' => 'Error while uploading',
                     'error' => true,
                     'code' => 500,
+                    'tes' => $tes,
                     'errors' => $e,
                 ], 500);
             }

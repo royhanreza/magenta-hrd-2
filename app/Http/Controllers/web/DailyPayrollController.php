@@ -566,7 +566,9 @@ class DailyPayrollController extends Controller
                             $currentDayShift = [
                                 'time_in' => $employee->officeShifts[0][$lowerDay . '_in_time'],
                                 'time_out' =>  $employee->officeShifts[0][$lowerDay . '_out_time'],
+                                'lateness' =>  $employee->officeShifts[0][$lowerDay . '_lateness'],
                             ];
+                            break;
                         }
                     }
                 }
@@ -653,12 +655,25 @@ class DailyPayrollController extends Controller
                     $upperLimit = date('H:i:s', strtotime('20:00:00'));
                 }
 
-
-                if ($category == 'present') {
-                    if ($clock > $upperLimit) {
-                        // $minutesOfDelay = $upperLimit->diff($clock)->format('i');
-                        $minutesOfDelay = Carbon::parse($upperLimit)->diffInMinutes($clock);
+                $lateness = 1;
+                if ($currentDayShift !== null) {
+                    if (isset($currentDayShift['lateness'])) {
+                        $lateness = $currentDayShift['lateness'];
                     }
+                }
+
+                if ($lateness == 1) {
+                    if ($category == 'present') {
+                        if ($clock > $upperLimit) {
+                            // $minutesOfDelay = $upperLimit->diff($clock)->format('i');
+                            $minutesOfDelay = Carbon::parse($upperLimit)->diffInMinutes($clock);
+                        }
+                    }
+                }
+
+                // If day is holiday
+                if ($dayStatus == 'holiday' || $dayStatus == 'cuti bersama' || $dayStatus == 'libur nasional') {
+                    $minutesOfDelay = 0;
                 }
 
                 // $minutesOfDelay =  $upperLimit

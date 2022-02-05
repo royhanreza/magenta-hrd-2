@@ -14,6 +14,8 @@ use Exception;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class LeaveController extends Controller
 {
@@ -52,7 +54,7 @@ class LeaveController extends Controller
 
         $employees = Employee::query()->whereHas('activeLeave')->with(['activeLeave', 'leaveSubmissions' => function ($q) {
             $q->where('status', 'approved')->where('leave_dates', 'like', '%' . date("Y") . '%');
-        }])->select($employeeColumns)->get()->each(function ($employee) {
+        }])->where('is_active', 1)->select($employeeColumns)->get()->each(function ($employee) {
             $leaveSubmissionsMonthly = collect($employee->leaveSubmissions)->map(function ($leaveSubmission) {
                 $dates = explode(',', $leaveSubmission->leave_dates);
                 // return collect($dates)->flatten();
@@ -256,6 +258,63 @@ class LeaveController extends Controller
         $leaveSubmissions = LeaveSubmission::with(['employee'])->get();
         // return $permissions;
         return view('leave-submission.index', ['leave_submissions' => $leaveSubmissions]);
+    }
+
+    /**
+     * Data for datatables.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function submissionData(Request $request)
+    {
+        $userLoginPermissions = [];
+        if ($request->session()->has('userLoginPermissions')) {
+            $userLoginPermissions = $request->session()->get('userLoginPermissions');
+        }
+
+        $statusQuery = $request->query('status');
+
+        $leaveSubmissions = LeaveSubmission::with(['employee']);
+        if ($statusQuery !== null) {
+            $leaveSubmissions->where('status', $statusQuery);
+        }
+        $leaveSubmissions->select('leave_submissions.*');
+        return DataTables::of($leaveSubmissions)
+            ->addColumn('approval', function ($row) use ($userLoginPermissions) {
+                $button = '';
+                if ($row->status == 'pending') {
+                    if (in_array("approvalLeaveSubmission", $userLoginPermissions)) {
+                        $button .= '
+                        <div class="btn-group" role="group" aria-label="Action Buttons">
+                            <button type="button" class="btn btn-sm btn-light btn-reject" data-id="' . $row->id . '"><i class="fas fa-fw fa-times"></i></a>
+                            <button type="button" class="btn btn-sm btn-light btn-approve" data-id="' . $row->id . '"><i class="fas fa-fw fa-check"></i></button>
+                        </div>';
+                    }
+                }
+                return $button;
+            })
+            ->addColumn('action', function ($row) use ($userLoginPermissions) {
+                $action = '';
+                $action .= '<div class="btn-group" role="group" aria-label="Action Buttons">';
+                if ($row->status == 'pending') {
+                    if (in_array("editLeaveSubmission", $userLoginPermissions)) {
+                        $action .= '<a href="/leave/edit/' . $row->id . '" class="btn btn-sm btn-light"><i class="fas fa-fw fa-pencil-alt"></i></a>';
+                    }
+                    if (in_array("deleteLeaveSubmission", $userLoginPermissions)) {
+                        $action .= '<button type="button" class="btn btn-sm btn-light btn-delete" data-id="' . $row->id . '"><i class="fas fa-fw fa-trash"></i></button>';
+                    }
+                }
+
+                if ($row->attachment !== null) {
+                    $action .= '<a href="' . Storage::disk('s3')->url($row->attachment) . '" target="_blank" class="btn btn-sm btn-light"><i class="fas fa-fw fa-file"></i></a>';
+                }
+
+                $action .= '</div>';
+
+                return $action;
+            })
+            ->rawColumns(['approval', 'action'])
+            ->make(true);
     }
 
     public function editSubmission($id)

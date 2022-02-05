@@ -102,7 +102,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                                     if (isset($employee->leave_monthly[$index + 1])) {
                                                         echo $employee->leave_monthly[$index + 1];
                                                     } else {
-                                                        echo 0;
+                                                        echo '-';
                                                     }
                                                 } else {
                                                     echo '';

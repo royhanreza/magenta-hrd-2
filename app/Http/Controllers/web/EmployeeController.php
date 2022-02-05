@@ -43,11 +43,44 @@ class EmployeeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::with(['careers' => function ($query) {
-            $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
-        }])->paginate(10);
+        $statusQuery = $request->query('status');
+        $departmentQuery = $request->query('department');
+        $departmentSelectionsQuery = json_decode($request->query('dpr_slc'));
+
+        $status = $this->queryFilter($statusQuery, ['1', '0'], null);
+        $department = $this->queryFilter($departmentQuery, ['choices'], null);
+
+        $employeeWhereClauses = [];
+
+        if ($status !== null) {
+            $employeeWhereClauses['is_active'] = $status;
+        }
+
+
+
+        // return $showAll ? 'true' : 'false';
+
+        $employees = Employee::query()
+            // ->whereHas('activeCareer.department', function ($query) use ($department, $departmentSelectionsQuery) {
+            //     $showAll = true;
+            //     if ($department !== null) {
+            //         if (is_array($departmentSelectionsQuery)) {
+            //             $showAll = false;
+            //             if (count($departmentSelectionsQuery) == 0) {
+            //                 $showAll = true;
+            //             }
+            //         }
+            //     }
+
+            //     if (!$showAll) {
+            //         $query->whereIn('id', $departmentSelectionsQuery);
+            //     }
+            // })
+            ->with(['careers' => function ($query) {
+                $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
+            }])->where($employeeWhereClauses)->paginate(10);
         // $active_employees = $employees->filter(function ($value, $key) {
         //     return $value > 2;
         // });
@@ -58,12 +91,16 @@ class EmployeeController extends Controller
         $inactive_employees = $all_employees->filter(function ($item, $key) {
             return $item->is_active == 0;
         });
+
+        $departments = CompanyDepartment::all();
         // return $employees;
 
         return view('employee.index', [
             'employees' => $employees,
+            'all_employees' => $all_employees,
             'active_employees' => $active_employees,
             'inactive_employees' => $inactive_employees,
+            'departments' => $departments,
         ]);
     }
 
@@ -97,6 +134,17 @@ class EmployeeController extends Controller
             'active_employees' => $active_employees,
             'inactive_employees' => $inactive_employees,
         ]);
+    }
+
+    private function queryFilter($query, $requirements = [], $default = null)
+    {
+        if (!is_array($requirements)) {
+            $requirements = [];
+        }
+
+        $value = in_array($query, $requirements) ? $query : $default;
+
+        return $value;
     }
 
     /**

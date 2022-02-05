@@ -2,8 +2,6 @@
     <thead>
         <tr>
             <th>Nama</th>
-            <th>Tanggal Mulai Kerja</th>
-            <th>Rek Bank</th>
             <th>Status</th>
             <th>Bagian (Jabatan)</th>
             <th>Gaji</th>
@@ -15,6 +13,8 @@
             <th>Total</th>
             <th>Awal Piutang</th>
             <th>Sisa Piutang</th>
+            <th>Tanggal Mulai Kerja</th>
+            <th>Rek Bank</th>
         </tr>
     </thead>
     <tbody>
@@ -25,8 +25,6 @@
         @foreach($employees as $employee)
         <tr>
             <td>{{ $employee->first_name }}</td>
-            <td>{{ \Carbon\Carbon::parse($employee->start_work_date)->isoFormat('LL') }}</td>
-            <td>{{ $employee->bank_account_number !== null ? '(' . $employee->bank_account_number . ')' : '' }}</td>
             @if($employee->npwp !== null)
             <td>{{ $employee->npwp->type }}</td>
             @else
@@ -51,6 +49,8 @@
             <!--<td data-format="#,##0_-">{{ $employee->loan_balance + $employee->loan }}</td>-->
             <td data-format="#,##0_-">{{ $employee->total_loan }}</td>
             <td data-format="#,##0_-">{{ $employee->loan_balance }}</td>
+            <td>{{ \Carbon\Carbon::parse($employee->start_work_date)->isoFormat('LL') }}</td>
+            <td>{{ $employee->bank_account_number !== null ? '(' . $employee->bank_account_number . ')' : '' }}</td>
         </tr>
         @endforeach
         <tr>

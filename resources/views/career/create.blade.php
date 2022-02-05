@@ -308,7 +308,7 @@
                                 <div class="input-group-prepend">
                                   <span class="input-group-text">Rp</span>
                                 </div>
-                                <input type="text" v-model="income['value']" @input="onInput" class="form-control text-right" aria-describedby="basic-addon1">
+                                <input type="text" v-model="income.value" @change="calculateTotalIncomes(selectedPayslip)" class="form-control text-right" aria-describedby="basic-addon1">
                               </div>
                             </div>
                           </div>
@@ -320,7 +320,7 @@
                                 <div class="input-group-prepend">
                                   <span class="input-group-text">Rp</span>
                                 </div>
-                                <input type="text" class="form-control text-right" :value="sumIncomes(selectedPayslip.salary_incomes)" aria-describedby="basic-addon1" readonly>
+                                <input type="text" class="form-control text-right" :value="toCurrencyFormat(selectedPayslip.total_incomes)" aria-describedby="basic-addon1" readonly>
                               </div>
                             </div>
                           </div>
@@ -335,7 +335,7 @@
                                 <div class="input-group-prepend">
                                   <span class="input-group-text">Rp</span>
                                 </div>
-                                <input type="text" v-model="deduction['value']" value="0" class="form-control text-right" aria-describedby="basic-addon1">
+                                <input type="text" v-model="deduction.value" @change="calculateTotalDeductions(selectedPayslip)" class="form-control text-right" aria-describedby="basic-addon1">
                               </div>
                             </div>
                           </div>
@@ -347,7 +347,7 @@
                                 <div class="input-group-prepend">
                                   <span class="input-group-text">Rp</span>
                                 </div>
-                                <input type="text" :value="sumIncomes(selectedPayslip.salary_deductions)" class="form-control text-right" aria-describedby="basic-addon1" readonly>
+                                <input type="text" :value="toCurrencyFormat(selectedPayslip.total_deductions)" class="form-control text-right" aria-describedby="basic-addon1" readonly>
                               </div>
                             </div>
                           </div>
@@ -424,9 +424,9 @@
       loading: false,
     },
     methods: {
-      onInput: function(event) {
-        console.log(event.target.value);
-      },
+      // onInput: function(event) {
+      //   console.log(event.target.value);
+      // },
       addCareer: function() {
         let vm = this;
         vm.loading = true;
@@ -497,12 +497,16 @@
         // })
         // console.log(payslip.salary_incomes.length)
         payslip.salary_incomes.forEach(income => {
-          income['value'] = 0;
+          income.value = 0;
         })
+        payslip.total_incomes = 0;
         payslip.salary_deductions.forEach(deduction => {
-          deduction['value'] = 0;
-        })
-        this.selectedPayslips.push(payslip);
+          deduction.value = 0;
+        });
+        payslip.total_deductions = 0;
+        this.selectedPayslips.push({
+          ...payslip
+        });
         if (this.hasBasicSalary(payslip)) {
           this.selectedPayslipWithBasicSalary = payslip.id;
         }
@@ -534,7 +538,7 @@
         // this.payslipComponentModels.splice(index, 1);
       },
       sumIncomes: function(incomes) {
-        const sum = incomes.map(income => isNaN(parseInt(income.value)) ? 0 : parseInt(income.value)).reduce((acc, cur) => {
+        const sum = incomes.map(income => isNaN(Number(income.value)) ? 0 : Number(income.value)).reduce((acc, cur) => {
           return acc + cur
         }, 0)
 
@@ -542,7 +546,7 @@
           return 0
         }
 
-        return parseInt(sum);
+        return Number(sum);
       },
       sumDeductions: function(deductions) {
         const sum = deductions.map(deduction => isNaN(parseInt(deduction.value)) ? 0 : parseInt(deduction.value)).reduce((acc, cur) => {
@@ -553,7 +557,29 @@
           return 0
         }
 
-        return parseInt(sum);
+        return Number(sum);
+      },
+      calculateTotalIncomes(payslip) {
+        const sum = payslip.salary_incomes.map(income => isNaN(Number(income.value)) ? 0 : Number(income.value)).reduce((acc, cur) => {
+          return acc + cur
+        }, 0)
+
+        if (isNaN(sum)) {
+          return 0
+        }
+
+        payslip.total_incomes = sum;
+      },
+      calculateTotalDeductions(payslip) {
+        const sum = payslip.salary_deductions.map(deduction => isNaN(parseInt(deduction.value)) ? 0 : parseInt(deduction.value)).reduce((acc, cur) => {
+          return acc + cur
+        }, 0)
+
+        if (isNaN(sum)) {
+          return 0
+        }
+
+        payslip.total_deductions = sum;
       },
       setDisablePayslip: function(id) {
         const payslip = this.payslips.filter(payslip => payslip.id == id)[0];
@@ -582,6 +608,9 @@
           return true;
         }
         return false;
+      },
+      toCurrencyFormat(number) {
+        return new Intl.NumberFormat('De-de').format(number);
       }
     },
     computed: {
@@ -646,7 +675,36 @@
       // payslipsWithoutBasicSalary: function() {
       //   return this.payslips.filter(payslip => payslip.salary_incomes.map(income => income.type).indexOf('gaji pokok') < 0);
       // }
-    }
+    },
+    watch: {
+      // 'form.items': {
+      selectedPayslips: {
+        handler(value, oldValue) {
+          const vm = this;
+          // const sum = incomes.map(income => isNaN(Number(income.value)) ? 0 : Number(income.value)).reduce((acc, cur) => {
+          //   return acc + cur
+          // }, 0)
+
+          // if (isNaN(sum)) {
+          //   return 0
+          // }
+          // console.log(first);
+          vm.selectedPayslips.forEach(payslip => {
+            let sum = 0;
+            if (payslip.salary_incomes && Array.isArray(payslip.salary_incomes)) {
+              sum = payslip.salary_incomes.map(income => isNaN(Number(income.value)) ? 0 : Number(income.value)).reduce((acc, cur) => {
+                return acc + cur
+              }, 0)
+            }
+
+            payslip.total_incomes = Number(sum);
+
+          })
+
+        },
+        deep: true,
+      },
+    },
   })
 </script>
 <script>

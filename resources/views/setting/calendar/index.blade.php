@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('vendor/datatables/css/fixedHeader.bootstrap4.css') }}"> -->
 @endsection
 
-@section('title', 'Magenta HRD')
+@section('title', 'Kalender | Magenta HRD')
 
 @section('content')
 @php
@@ -77,7 +77,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
               @endif
               <div id="formCalendar" class="collapse">
                 <form @submit.prevent="addCalendar" autocomplete="off">
-                  <div class="form-row">
+                  <div class="form-row align-top">
                     <div class="form-group col-md-4">
                       <label>Tanggal</label>
                       <input v-model="calendarModel.add.date" type="text" id="calendar-add-date" class="form-control">
@@ -93,6 +93,11 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                         <option value="cuti bersama">Cuti Bersama</option>
                         <option value="event non libur">Event Non Libur</option>
                       </select>
+                      <div v-if="calendarModel.add.type == 'cuti bersama'">
+                        <label class="custom-control custom-checkbox">
+                          <input type="checkbox" v-model="makeLeaveSubmission" class="custom-control-input"><span class="custom-control-label" style="margin-top: 3px"><strong>Masukkan cuti bersama ke pengajuan cuti</strong></span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                   <div class="d-flex justify-content-end">
@@ -117,7 +122,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                         <h6>Belum ada data</h6>
                       </td>
                     </tr>
-                    <tr is="calendar" v-for="(calendar, index) in calendars" :key="calendar.id" :id="calendar.id" :index="index" :date="calendar.date" :name="calendar.name" :type="calendar.type" :ondelete="deleteCalendar" :onopenmodal="openEditCalendarModal" :moment="moment"></tr>
+                    <tr is="calendar" v-for="(calendar, index) in calendars" :key="calendar.id" :id="calendar.id" :index="index" :date="calendar.date" :name="calendar.name" :type="calendar.type" :calendar="calendar" :ondelete="deleteCalendar" :onopenmodal="openEditCalendarModal" :moment="moment"></tr>
                   </tbody>
                 </table>
               </div>
@@ -214,16 +219,16 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
   moment.locale('id');
 
   Vue.component('calendar', {
-    props: ['id', 'index', 'date', 'name', 'type', 'ondelete', 'onopenmodal', 'moment'],
+    props: ['id', 'index', 'date', 'name', 'type', 'ondelete', 'onopenmodal', 'moment', 'calendar'],
     template: `
     <tr>
       <td class="text-center">@{{ moment(date).format('LL') }}</td>
       <td class="text-center">@{{ name }}</td>
-      <td class="text-center text-capitalize">@{{ type }}</td>
+      <td class="text-center text-capitalize">@{{ type }} <br><small v-if="calendar.with_leave_submission == 1">(Dengan Pengajuan Cuti)</small></td>
       <td class="text-center">
         <div class="btn-group" role="group" aria-label="Action Buttons">
           @if(in_array("editCalendarSetting", $userLoginPermissions))
-          <button class="btn btn-sm btn-light" @click="onopenmodal(index, id)"><i class="fas fa-fw fa-pencil-alt"></i></button>
+          <button v-if="calendar.with_leave_submission !== 1" class="btn btn-sm btn-light" @click="onopenmodal(index, id)"><i class="fas fa-fw fa-pencil-alt"></i></button>
           @endif
           @if(in_array("deleteCalendarSetting", $userLoginPermissions))
           <button type="button" class="btn btn-sm btn-light" @click="ondelete(index, id)"><i class="fas fa-fw fa-trash"></i></button>
@@ -239,6 +244,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
     el: '#app',
     data: {
       calendars: JSON.parse(String.raw `{!! $calendars !!}`),
+      makeLeaveSubmission: false,
       calendarModel: {
         add: {
           date: '',
@@ -277,6 +283,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
             date: this.calendarModel.add.date,
             name: this.calendarModel.add.name,
             type: this.calendarModel.add.type,
+            make_leave_submission: vm.makeLeaveSubmission,
           })
           .then(function(response) {
             console.log(response)

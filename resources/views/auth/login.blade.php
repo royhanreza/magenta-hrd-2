@@ -32,7 +32,13 @@
   <!-- ============================================================== -->
   <!-- login page  -->
   <!-- ============================================================== -->
-  <div class="splash-container" id="app">
+  <div style="height: 100vh; width: 100%; display: flex; justify-content: center; align-items: center;">
+    <div class="text-center">
+      <h1>MAINTENANCE</h1>
+      <p>Sorry, you can comeback later</p>
+    </div>
+  </div>
+  <!-- <div class="splash-container" id="app">
     <div class="card ">
       <div class="card-header text-center">
         <h3>MAGENTA HRD</h3>
@@ -52,16 +58,11 @@
             </div>
 
           </div>
-          <!-- <div class="form-group">
-            <label class="custom-control custom-checkbox">
-              <input class="custom-control-input" type="checkbox"><span class="custom-control-label">Remember Me</span>
-            </label>
-          </div> -->
           <p v-if="incorrectCredential" class="text-danger text-center">Username atau password salah</p>
           <button type="submit" class="btn btn-primary btn-lg btn-block" v-bind:disabled="loading || disable"><span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sign in</button>
         </form>
       </div>
-    </div>
+    </div> -->
   </div>
 
   <!-- ============================================================== -->

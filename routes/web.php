@@ -497,3 +497,15 @@ Route::prefix('login')->group(function () {
 Route::prefix('error')->group(function () {
     Route::get('/forbidden', [ErrorController::class, 'forbidden'])->name('error.forbidden');
 });
+
+Route::prefix('datatables')->group(function () {
+    Route::prefix('sick')->group(function () {
+        Route::get('/', [SickController::class, 'indexData']);
+    });
+    Route::prefix('leave')->group(function () {
+        Route::get('/', [LeaveController::class, 'submissionData']);
+    });
+    Route::prefix('permission')->group(function () {
+        Route::get('/', [PermissionController::class, 'indexData']);
+    });
+});

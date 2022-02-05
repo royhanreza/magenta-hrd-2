@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddOvertimeDurationAttendancesTable extends Migration
+class AddSourceToLeaveSubmissions extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddOvertimeDurationAttendancesTable extends Migration
      */
     public function up()
     {
-        Schema::table('attendances', function (Blueprint $table) {
-            $table->tinyInteger('overtime_duration')->nullable()->default(0);
+        Schema::table('leave_submissions', function (Blueprint $table) {
+            $table->string('source', 50)->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddOvertimeDurationAttendancesTable extends Migration
      */
     public function down()
     {
-        Schema::table('attendances', function (Blueprint $table) {
-            $table->dropColumn(['overtime_duration']);
+        Schema::table('leave_submissions', function (Blueprint $table) {
+            $table->dropColumn(['source']);
         });
     }
 }

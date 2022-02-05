@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddTypeToEmployeesTable extends Migration
+class AddSourceToAttendances extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddTypeToEmployeesTable extends Migration
      */
     public function up()
     {
-        Schema::table('employees', function (Blueprint $table) {
-            $table->string('type', 30);
+        Schema::table('attendances', function (Blueprint $table) {
+            $table->string('source', 50)->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddTypeToEmployeesTable extends Migration
      */
     public function down()
     {
-        Schema::table('employees', function (Blueprint $table) {
-            $table->dropColumn(['type']);
+        Schema::table('attendances', function (Blueprint $table) {
+            $table->dropColumn(['source']);
         });
     }
 }
