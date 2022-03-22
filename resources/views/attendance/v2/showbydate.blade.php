@@ -239,7 +239,8 @@
                                             <th>Jam Masuk</th>
                                             <th>Jam Keluar</th>
                                             <th>Durasi Lembur</th>
-                                            <th></th>
+                                            <th>Pengajuan Lembur</th>
+                                            <th><i class="fas fa-paperclip"></i></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -292,10 +293,13 @@
                                                 <i v-else class="fas fa-exclamation-circle" style="color: #3d405c;" data-toggle="tooltip" data-placement="top" title="Isi jam keluar untuk mengisi lembur"></i>
                                             </td>
                                             <!-- End:Lembur -->
+                                            <td class="text-center">
+                                                <div v-html="getOvertimeSubmissions(attendance.id)"></div>
+                                            </td>
                                             <!-- Attachment -->
                                             <td class="text-center">
                                                 <div v-if="attendance.images.length">
-                                                    <a v-for="image in attendance.images" :href="'https://arenzha.s3.ap-southeast-1.amazonaws.com/' + image" target="_blank" class="mr-3"><i class="fas fa-paperclip"></i> @{{ image }}</a>
+                                                    <a v-for="image in attendance.images" :href="'https://arenzha.s3.ap-southeast-1.amazonaws.com/' + image" target="_blank" class="mr-3"><i class="fas fa-file-image"></i></a>
                                                 </div>
                                                 <span v-else>-</span>
                                             </td>
@@ -351,8 +355,42 @@
         data: {
             attendances: JSON.parse(String.raw `{!! json_encode($attendances) !!}`),
             pendingAttendances: (JSON.parse(jsonEscape('{!! json_encode($pending_attendances) !!}'))),
+            overtimeSubmissions: JSON.parse(String.raw `{!! json_encode($overtime_submissions) !!}`),
         },
         methods: {
+            getOvertimeSubmissions(employeeId) {
+                let vm = this;
+
+                const getStatusColor = (status) => {
+                    switch (status) {
+                        case 'pending':
+                            return 'warning';
+                        case 'approved':
+                            return 'success';
+                        case 'rejected':
+                            return 'danger';
+                        default:
+                            return 'dark';
+                    }
+                }
+
+                const overtimeSubmissions = vm.overtimeSubmissions.filter(submission => {
+                    return submission.employee_id == employeeId;
+                });
+
+                if (overtimeSubmissions.length > 0) {
+                    let submissionsList = '<div>';
+                    overtimeSubmissions.forEach(submission => {
+                        // submissionsList += '<li>';
+                        submissionsList += `<a href="/overtime-submission/detail/${submission.id}" target="_blank" class="text-${getStatusColor(submission.status)}" data-toggle="tooltip" data-placement="top" title="${submission.work}">${ submission.overtime_start } - ${submission.overtime_end}</a>`;
+                        // submissionsList += '</li>';
+                    });
+                    submissionsList += '</div>';
+                    return submissionsList;
+                }
+
+                return '<span>-</span>';
+            },
             approveAttendance: function(id, index) {
                 // const id = $(this).attr('data-id');
                 const vm = this;

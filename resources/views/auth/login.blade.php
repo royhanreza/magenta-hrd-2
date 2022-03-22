@@ -58,7 +58,7 @@
             </div>
 
           </div>
-          <p v-if="incorrectCredential" class="text-danger text-center">Username atau password salah</p>
+          <p v-if="error.message" class="text-danger text-center">@{{ error.message }}</p>
           <button type="submit" class="btn btn-primary btn-lg btn-block" v-bind:disabled="loading || disable"><span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sign in</button>
         </form>
       </div>
@@ -80,8 +80,10 @@
         password: '',
         loading: false,
         passwordVisible: false,
-        incorrectCredential: false,
         disable: false,
+        error: {
+          message: null,
+        }
       },
       methods: {
         login: function(e) {
@@ -111,7 +113,18 @@
             })
             .catch(function(error) {
               vm.loading = false;
-              vm.incorrectCredential = true;
+              const {
+                message,
+                errors
+              } = error.response.data;
+
+              if (message) {
+                vm.error.message = message;
+                console.error(errors);
+              } else {
+                vm.error.message = 'something wrong, try again';
+              }
+              // vm.incorrectCredential = true;
               // console.log(error.data);
               // Swal.fire({
               //   icon: 'error',

@@ -7,6 +7,7 @@ use App\Exports\AttendancesByEmployeeExport;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\OvertimeSubmission;
 use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
@@ -25,11 +26,14 @@ class AttendanceController extends Controller
         $attendanceSummary = $this->getAttendance($date)['summary'];
         $pendingAttendances = $this->getAttendance($date)['pending_attendances'];
 
+        $overtimeSubmissions = OvertimeSubmission::with(['employee'])->where('date', $date)->get();
+
         // return $attendances;
         return view('attendance.v2.index', [
             'attendances' => $attendances,
             'summary' => $attendanceSummary,
-            'pending_attendances' => $pendingAttendances
+            'pending_attendances' => $pendingAttendances,
+            'overtime_submissions' => $overtimeSubmissions,
         ]);
     }
 
@@ -38,12 +42,17 @@ class AttendanceController extends Controller
         $attendances = $this->getAttendance($date)['attendances'];
         $attendanceSummary = $this->getAttendance($date)['summary'];
         $pendingAttendances = $this->getAttendance($date)['pending_attendances'];
+
+
+
+        $overtimeSubmissions = OvertimeSubmission::with(['employee'])->where('date', date('Y-m-d', strtotime($date)))->get();
         // return $attendances;
         return view('attendance.v2.showbydate', [
             'date' => $date,
             'attendances' => $attendances,
             'summary' => $attendanceSummary,
-            'pending_attendances' => $pendingAttendances
+            'pending_attendances' => $pendingAttendances,
+            'overtime_submissions' => $overtimeSubmissions,
         ]);
     }
 

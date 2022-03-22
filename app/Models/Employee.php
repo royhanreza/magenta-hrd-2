@@ -145,4 +145,9 @@ class Employee extends Authenticatable
     {
         return $this->hasMany(Loan::class);
     }
+
+    public function overtimeSubmissions()
+    {
+        return $this->hasMany(OvertimeSubmission::class);
+    }
 }

@@ -98,13 +98,17 @@
                     <li class="nav-item">
                         <?php
                         $attendanceRoute = request()->is('attendance') || request()->is('attendance/date*');
-                        $isAttendanceGroup = $attendanceRoute || request()->is('attendance/upload') || request()->is('attendance/upload-from-machine') || request()->is('attendance/upload-from-machine-app');
+                        $overtimeSubmissionRoute = request()->is('overtime-submission*');
+                        $isAttendanceGroup = $attendanceRoute || $overtimeSubmissionRoute || request()->is('attendance/upload') || request()->is('attendance/upload-from-machine') || request()->is('attendance/upload-from-machine-app');
                         ?>
                         <a class="nav-link {{ $isAttendanceGroup ? 'active' : '' }}" href="#" data-toggle="collapse" aria-expanded="false" data-target="#submenu-4" aria-controls="submenu-4"><i class="fa fa-fw fa-clock"></i>Timesheet</a>
                         <div id="submenu-4" class="collapse {{ $isAttendanceGroup  ? 'show' : '' }} submenu">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
                                     <a class="nav-link {{ $attendanceRoute ? 'active' : '' }}" href="{{ url('/attendance') }}">Absensi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ $overtimeSubmissionRoute ? 'active' : '' }}" href="{{ url('/overtime-submission') }}">Pengajuan Lembur</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link {{ (request()->is('attendance/upload')) ? 'active' : '' }}" href="{{ url('/attendance/upload') }}">Impor Absensi</a>

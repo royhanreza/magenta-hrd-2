@@ -24,4 +24,9 @@ class Attendance extends Model
     {
         return $this->belongsTo(Employee::class, 'rejected_by', 'id');
     }
+
+    // public function overtimeSubmissions()
+    // {
+    //     return $this->hasMany(OvertimeSubmission::class, 'date', 'date');
+    // }
 }

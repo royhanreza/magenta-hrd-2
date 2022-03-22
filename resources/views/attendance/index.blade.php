@@ -242,7 +242,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                 <table class="table table-striped use-datatable">
                   <thead class="bg-light text-center">
                     <tr>
-                        <th>ID Pegawai</th>
+                      <th>ID Pegawai</th>
                       <th>Pegawai</th>
                       <th>Job Title</th>
                       <th>Status</th>
@@ -255,7 +255,7 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                   <tbody>
                     @foreach($attendances as $attendance)
                     <tr>
-                        <td>{{ $attendance->id }}</td>
+                      <td>{{ $attendance->id }}</td>
                       <td>
                         <!--<div class="d-flex align-items-center">-->
                         <!--    <a class="d-inline-block mr-1" href="/employee/detail/{{ $attendance->id }}">-->

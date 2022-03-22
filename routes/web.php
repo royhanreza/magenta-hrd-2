@@ -30,6 +30,7 @@ use App\Http\Controllers\web\LoanController;
 use App\Http\Controllers\web\LoginController;
 use App\Http\Controllers\web\MappingEventController;
 use App\Http\Controllers\web\OfficeShiftController;
+use App\Http\Controllers\web\OvertimeSubmissionController;
 use App\Http\Controllers\web\PayrollController;
 use App\Http\Controllers\web\PaySlipController;
 use App\Http\Controllers\web\PermissionCategoryController;
@@ -474,7 +475,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{id}', [EmployeeFileController::class, 'destroy']);
     });
 
-    // THR
+    // Report
     Route::prefix('report')->group(function () {
         Route::get('/', [ReportController::class, 'index']);
         Route::get('/bpjs', [ReportController::class, 'bpjs']);
@@ -485,6 +486,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/export/pph/excel', [ReportController::class, 'exportPphExcel']);
         Route::post('/bpjs', [ReportController::class, 'storeReportBpjs']);
         Route::post('/pph', [ReportController::class, 'storeReportPph']);
+    });
+
+    // Overtime Submission
+    Route::prefix('overtime-submission')->group(function () {
+        Route::get('/', [OvertimeSubmissionController::class, 'index']);
+        Route::get('/create', [OvertimeSubmissionController::class, 'create']);
+        Route::get('/detail/{id}', [OvertimeSubmissionController::class, 'show']);
+        Route::get('/edit/{id}', [OvertimeSubmissionController::class, 'edit']);
+        Route::post('/', [OvertimeSubmissionController::class, 'store']);
+        Route::post('/{id}', [OvertimeSubmissionController::class, 'update']);
+        Route::delete('/{id}', [OvertimeSubmissionController::class, 'destroy']);
     });
 });
 
@@ -507,5 +519,8 @@ Route::prefix('datatables')->group(function () {
     });
     Route::prefix('permission')->group(function () {
         Route::get('/', [PermissionController::class, 'indexData']);
+    });
+    Route::prefix('overtime-submissions')->group(function () {
+        Route::get('/', [OvertimeSubmissionController::class, 'indexData']);
     });
 });

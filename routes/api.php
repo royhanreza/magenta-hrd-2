@@ -14,6 +14,7 @@ use App\Http\Controllers\api\FreelancerApiController;
 use App\Http\Controllers\api\JobTitleApiController;
 use App\Http\Controllers\api\LeaveApiController;
 use App\Http\Controllers\api\LoginApiController;
+use App\Http\Controllers\api\OvertimeSubmissionApiController;
 use App\Http\Controllers\api\PermissionApiController;
 use App\Http\Controllers\api\PermissionCategoryApiController;
 use App\Http\Controllers\api\ProvinceApiController;
@@ -176,6 +177,18 @@ Route::prefix('leave-submissions')->group(function () {
     Route::post('/action/reject/{id}', [LeaveApiController::class, 'reject']);
     Route::delete('/{id}', [LeaveApiController::class, 'deleteLeaveSubmission']);
     Route::patch('/{id}', [LeaveApiController::class, 'updateLeaveSubmission']);
+    // Route::get('/{id}', [EventApiController::class, 'getAllBudgets']);
+});
+
+// Leave SUbmision
+Route::prefix('overtime-submissions')->group(function () {
+    Route::get('/', [OvertimeSubmissionApiController::class, 'index']);
+    Route::get('/{id}', [OvertimeSubmissionApiController::class, 'show']);
+    Route::post('/', [OvertimeSubmissionApiController::class, 'store']);
+    Route::post('/action/approve/{id}', [OvertimeSubmissionApiController::class, 'approve']);
+    Route::post('/action/reject/{id}', [OvertimeSubmissionApiController::class, 'reject']);
+    Route::delete('/{id}', [OvertimeSubmissionApiController::class, 'destroy']);
+    Route::patch('/{id}', [OvertimeSubmissionApiController::class, 'update']);
     // Route::get('/{id}', [EventApiController::class, 'getAllBudgets']);
 });
 
