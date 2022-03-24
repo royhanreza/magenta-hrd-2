@@ -147,7 +147,7 @@ class AttendancesByEmployeeExport2 implements FromView
                     // if ($att->category == 'present') {
                     $category = $att->category;
                     if ($att->status == 'approved') {
-                        $status = 'present';
+                        $status = $category;
                     } else if ($att->status == 'pending') {
                         $status = 'pending';
                         $pendingCategory = 'Hadir';

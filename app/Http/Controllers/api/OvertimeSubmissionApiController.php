@@ -5,8 +5,10 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\OvertimeSubmission;
+use Error;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OvertimeSubmissionApiController extends Controller
 {
@@ -120,6 +122,8 @@ class OvertimeSubmissionApiController extends Controller
 
         try {
             $overtimeSubmission->status = 'approved';
+            $overtimeSubmission->approved_by = Auth::id();
+            $overtimeSubmission->approved_at = date('Y-m-d H:i:s');
             // $sickSubmission->description = $description;
 
             $checkout = Attendance::query()
@@ -130,7 +134,7 @@ class OvertimeSubmissionApiController extends Controller
                 ->first();
 
             if ($checkout == null) {
-                throw new Exception('Tidak ditemukan data absensi clock out di tanggal ' . $generalDate);
+                throw new Error('Tidak ditemukan data absensi clock out di tanggal ' . $generalDate);
             }
 
             $newCheckout = Attendance::find($checkout->id);

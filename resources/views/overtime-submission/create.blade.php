@@ -89,10 +89,31 @@
                                                 <!-- <input v-model="firstName" type="text" class="form-control form-control-sm" required> -->
                                                 <select class="form-control form-control-sm" id="employee-name" v-model="employee" required>
                                                     <option value="">-- Pilih Pegawai --</option>
-                                                    @foreach($employees as $employee)
-                                                    <option value="{{ $employee->id }}">{{ $employee->employee_id }} - {{ $employee->first_name }}</option>
-                                                    @endforeach
+                                                    <option v-for="employee in employees" :value="employee.id">@{{ employee.employee_id }} - @{{ employee.first_name }}</option>
                                                 </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="first-name" class="col-sm-3 col-form-label"></label>
+                                            <div class="col-sm-9">
+                                                <div>
+                                                    <table class="table table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <td>Nama</td>
+                                                                <td class="text-center">Aksi</td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(employee, index) in selectedEmployees">
+                                                                <td><span>@{{ employee.employee_id }}</span> - <strong>@{{ employee.first_name }}</strong></td>
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-danger btn-sm" @click="removeSelectedEmployee(index)"><i class="fas fa-times"></i></button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="form-group row">
@@ -245,6 +266,7 @@
         el: '#app',
         data: {
             dateOfFiling: '{{ date("Y-m-d") }}',
+            employees: JSON.parse(String.raw `{!! $employees !!}`),
             employee: '',
             categories: [],
             overtime: {
@@ -254,6 +276,7 @@
                 work: '',
                 note: '',
             },
+            selectedEmployees: [],
             // overtimeDate: '',
             // overtimeStart: '',
             // overtimeEnd: '',
@@ -267,9 +290,10 @@
             submitForm: function() {
                 this.sendData();
             },
+            removeSelectedEmployee(index) {
+                this.selectedEmployees.splice(index, 1);
+            },
             sendData: function() {
-
-
                 let vm = this;
 
                 vm.loading = true;
@@ -283,6 +307,7 @@
                     work: vm.overtime.work,
                     note: vm.overtime.note,
                     status: vm.status,
+                    selected_employees_ids: vm.selectedEmployeesIds,
                 }
 
                 // console.log(data)
@@ -321,8 +346,12 @@
                         console.log(response);
                     })
                     .catch(function(error) {
+                        console.error(error)
                         vm.loading = false;
-                        const message = error.response.data.errors || 'Something wrong';
+                        let message = error.response.data.errors || 'Something wrong';
+                        if (!message) {
+                            message = error.response.data.message || 'Something wrong'
+                        }
                         // console.log(error.response);
                         Swal.fire(
                             'Oops!',
@@ -334,6 +363,29 @@
 
         },
         computed: {
+            selectedEmployeesIds() {
+                const {
+                    selectedEmployees
+                } = this;
+                if (Array.isArray(selectedEmployees)) {
+                    return selectedEmployees.map(employee => employee.id);
+                }
+
+                return [];
+            },
+            unselectedEmployees() {
+                const {
+                    employees,
+                    selectedEmployees,
+                    selectedEmployeesIds,
+                } = this;
+                if (Array.isArray(employees) && Array.isArray(selectedEmployees) && Array.isArray(selectedEmployeesIds)) {
+                    const unselected = employees.filter(employee => selectedEmployeesIds.indexOf(employee.id) < 0)
+                    return unselected
+                }
+
+                return [];
+            },
             isValidClock() {
                 let vm = this;
                 const start = vm.overtime.start;
@@ -369,6 +421,23 @@
             var data = e.params.data;
             // console.log(data);
             app.$data.employee = data.id
+
+            const {
+                employees
+            } = app.$data;
+            if (Array.isArray(employees)) {
+                const [employee] = employees.filter(employee => employee.id == data.id)
+                if (employee) {
+                    const selectedEmployeesIds = app.$data.selectedEmployees.map(employee => employee.id);
+                    if (Array.isArray(selectedEmployeesIds)) {
+                        const exist = selectedEmployeesIds.includes(employee.id);
+                        if (!exist) {
+                            app.$data.selectedEmployees.push(employee)
+                        }
+                    }
+                }
+            }
+
         });
 
         $("#category").select2().on('select2:select', function(e) {

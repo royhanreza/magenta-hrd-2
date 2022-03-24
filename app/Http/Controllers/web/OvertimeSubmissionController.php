@@ -102,65 +102,71 @@ class OvertimeSubmissionController extends Controller
     {
         DB::beginTransaction();
         try {
-            $generalDate = $request->date;
+            $selectedEmployeesIds = explode(',', $request->selected_employees_ids);
 
-            $startDate = $generalDate;
-            $endDate = $generalDate;
-            $overtimeStart = $request->overtime_start;
-            $overtimeEnd = $request->overtime_end;
+            if (is_array($selectedEmployeesIds)) {
+                foreach ($selectedEmployeesIds as $employeeId) {
+                    $generalDate = $request->date;
 
-            if ($overtimeEnd < $overtimeStart) {
-                $endDate = Carbon::parse($endDate)->addDay()->format('Y-m-d');
-            }
+                    $startDate = $generalDate;
+                    $endDate = $generalDate;
+                    $overtimeStart = $request->overtime_start;
+                    $overtimeEnd = $request->overtime_end;
 
-            $carbonStartDate = Carbon::parse($startDate . ' ' . $overtimeStart);
-            $carbonEndDate = Carbon::parse($endDate . ' ' . $overtimeEnd);
+                    if ($overtimeEnd < $overtimeStart) {
+                        $endDate = Carbon::parse($endDate)->addDay()->format('Y-m-d');
+                    }
 
-            $duration = 0;
+                    $carbonStartDate = Carbon::parse($startDate . ' ' . $overtimeStart);
+                    $carbonEndDate = Carbon::parse($endDate . ' ' . $overtimeEnd);
 
-            $diffMinutes = $carbonStartDate->diffInMinutes($carbonEndDate);
+                    $duration = 0;
 
-            $x = $diffMinutes % 30; // 0
-            $y = ($diffMinutes - $x) / 30; // 3 
+                    $diffMinutes = $carbonStartDate->diffInMinutes($carbonEndDate);
 
-            if ($y > 0) {
-                $z = ($diffMinutes - $x) - 30; // (90 - 0) - 30 = 60
-                $duration = 1 + floor($z / 60); // 1 + floor(60 / 60) = 2
-            }
+                    $x = $diffMinutes % 30; // 0
+                    $y = ($diffMinutes - $x) / 30; // 3 
 
-            $overtimeSubmission = new OvertimeSubmission;
-            $overtimeSubmission->date_of_filing = $request->date_of_filing;
-            $overtimeSubmission->employee_id = $request->employee_id;
-            $overtimeSubmission->date = $request->date;
-            $overtimeSubmission->overtime_start = $request->overtime_start;
-            $overtimeSubmission->overtime_end = $request->overtime_end;
-            $overtimeSubmission->duration = $duration;
-            $overtimeSubmission->work = $request->work;
-            $overtimeSubmission->note = $request->note;
-            $overtimeSubmission->status = $request->status;
+                    if ($y > 0) {
+                        $z = ($diffMinutes - $x) - 30; // (90 - 0) - 30 = 60
+                        $duration = 1 + floor($z / 60); // 1 + floor(60 / 60) = 2
+                    }
 
-            if ($overtimeSubmission->status == 'approved') {
-                $overtimeSubmission->approved_by = Auth::id();
-                $overtimeSubmission->approved_at = date('Y-m-d H:i:s');
-            }
+                    $overtimeSubmission = new OvertimeSubmission;
+                    $overtimeSubmission->date_of_filing = $request->date_of_filing;
+                    $overtimeSubmission->employee_id = $employeeId;
+                    $overtimeSubmission->date = $request->date;
+                    $overtimeSubmission->overtime_start = $request->overtime_start;
+                    $overtimeSubmission->overtime_end = $request->overtime_end;
+                    $overtimeSubmission->duration = $duration;
+                    $overtimeSubmission->work = $request->work;
+                    $overtimeSubmission->note = $request->note;
+                    $overtimeSubmission->status = $request->status;
 
-            $overtimeSubmission->save();
+                    if ($overtimeSubmission->status == 'approved') {
+                        $overtimeSubmission->approved_by = Auth::id();
+                        $overtimeSubmission->approved_at = date('Y-m-d H:i:s');
+                    }
 
-            if ($overtimeSubmission->status == 'approved') {
-                $checkout = Attendance::query()
-                    ->where('date', $generalDate)
-                    ->where('employee_id', $request->employee_id)
-                    ->where('type', 'check out')
-                    ->orderBy('id', 'desc')
-                    ->first();
+                    $overtimeSubmission->save();
 
-                if ($checkout == null) {
-                    throw new Exception('Tidak ditemukan data absensi clock out di tanggal ' . $generalDate);
+                    if ($overtimeSubmission->status == 'approved') {
+                        $checkout = Attendance::query()
+                            ->where('date', $generalDate)
+                            ->where('employee_id', $employeeId)
+                            ->where('type', 'check out')
+                            ->orderBy('id', 'desc')
+                            ->first();
+
+                        if ($checkout == null) {
+                            throw new Error('Tidak ditemukan data absensi clock out di tanggal untuk pegawai dengan id ' . $employeeId . $generalDate);
+                        }
+
+                        $newCheckout = Attendance::find($checkout->id);
+                        $newCheckout->overtime_submission_duration += $duration;
+                        $newCheckout->save();
+                    }
                 }
-
-                $newCheckout = Attendance::find($checkout->id);
-                $newCheckout->overtime_submission_duration += $duration;
-                $newCheckout->save();
             }
 
             DB::commit();
