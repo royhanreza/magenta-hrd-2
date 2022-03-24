@@ -272,6 +272,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/approve', [AttendanceController::class, 'approve']);
         Route::post('/{id}/reject', [AttendanceController::class, 'reject']);
         Route::patch('/{id}/update-overtime', [AttendanceController::class, 'updateOvertime']);
+        Route::patch('/{id}/update-overtime-submission', [AttendanceController::class, 'updateOvertimeSubmission']);
         Route::post('/{id}/update-clockin', [AttendanceController::class, 'updateClockIn']);
         Route::post('/{id}/update-clockout', [AttendanceController::class, 'updateClockOut']);
         Route::delete('/{id}/reset-clock', [AttendanceController::class, 'resetClock']);

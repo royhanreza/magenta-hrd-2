@@ -242,8 +242,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                             <th>Status</th>
                                             <th>Jam Masuk</th>
                                             <th>Jam Keluar</th>
-                                            <th>Durasi Lembur</th>
+                                            <th>Jumlah Jam Lembur</th>
                                             <th>Pengajuan Lembur</th>
+                                            <th>Jumlah Jam Lembur Pengajuan</th>
                                             <th><i class="fas fa-paperclip"></i></th>
                                         </tr>
                                     </thead>
@@ -297,6 +298,10 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                                             </td>
                                             <td class="text-center">
                                                 <div v-html="getOvertimeSubmissions(attendance.id)"></div>
+                                            </td>
+                                            <td class="text-center">
+                                                <input v-if="attendance.status == 'present' && attendance.checkout_id !== null" type="number" @change="updateOvertimeSubmission($event, attendance.checkout_id)" class="form-control form-control-sm mx-auto" :value="attendance.overtime_submission_duration" style="width: 70px;">
+                                                <i v-else class="fas fa-exclamation-circle" style="color: #3d405c;" data-toggle="tooltip" data-placement="top" title="Isi jam keluar untuk mengisi lembur"></i>
                                             </td>
                                             <!-- End:Lembur -->
                                             <!-- Attachment -->
@@ -382,13 +387,13 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                 });
 
                 if (overtimeSubmissions.length > 0) {
-                    let submissionsList = '<div>';
+                    let submissionsList = '<div><ul>';
                     overtimeSubmissions.forEach(submission => {
                         // submissionsList += '<li>';
-                        submissionsList += `<a href="/overtime-submission/detail/${submission.id}" target="_blank" class="text-${getStatusColor(submission.status)}" data-toggle="tooltip" data-placement="top" title="${submission.work}">${ submission.overtime_start } - ${submission.overtime_end}</a>`;
+                        submissionsList += `<li><a href="/overtime-submission/detail/${submission.id}" target="_blank" class="text-${getStatusColor(submission.status)}" data-toggle="tooltip" data-placement="top" title="${submission.work}">${ submission.overtime_start } - ${submission.overtime_end}</a></li>`;
                         // submissionsList += '</li>';
                     });
-                    submissionsList += '</div>';
+                    submissionsList += '</ul></div>';
                     return submissionsList;
                 }
 
@@ -518,6 +523,22 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
             updateOvertime: function(event, id) {
                 axios.patch('/attendance/' + id + '/update-overtime', {
                         overtime_duration: event.target.value,
+                    })
+                    .then(function(response) {
+                        console.log('overtime updated');
+                    })
+                    .catch(function(error) {
+                        console.log(error.data);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops',
+                            text: "Failed to update overtime",
+                        })
+                    });
+            },
+            updateOvertimeSubmission: function(event, id) {
+                axios.patch('/attendance/' + id + '/update-overtime-submission', {
+                        overtime_submission_duration: event.target.value,
                     })
                     .then(function(response) {
                         console.log('overtime updated');

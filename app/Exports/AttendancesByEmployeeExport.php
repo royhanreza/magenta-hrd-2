@@ -39,7 +39,7 @@ class AttendancesByEmployeeExport implements FromView
         $attendancesKeys = collect($this->getAttendance($date1, $date2, $this->employee_id)['attendances'])->map(function ($item, $key) {
             return $key;
         })->all();
-        $attendanceSummary = $this->getAttendance($date1, $date2, $this->employee_id)['summary'];
+        // $attendanceSummary = $this->getAttendance($date1, $date2, $this->employee_id)['summary'];
         $pendingAttendances = $this->getAttendance($date1, $date2, $this->employee_id)['pending_attendances'];
 
         // return $attendances;
@@ -79,7 +79,7 @@ class AttendancesByEmployeeExport implements FromView
         // ]);
         return view('attendance.sheet.attendancebyemployee', [
             'period' => $period,
-            'summary' => $attendanceSummary,
+            // 'summary' => $attendanceSummary,
             'pending_attendances' => $pendingAttendances,
             'employee' => $employee,
             'last_career' => $lastCareer,
@@ -193,14 +193,14 @@ class AttendancesByEmployeeExport implements FromView
                 ];
             })->all();
 
-        $attendanceSummary = [
-            'sick_count' => DB::table('attendances')->where('category', 'sick')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'approved')->count(),
-            'present_count' => DB::table('attendances')->where('category', 'present')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('type', 'check in')->where('status', 'approved')->count(),
-            'permission_count' => DB::table('attendances')->where('category', 'permission')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'approved')->count(),
-            'leave_count' => DB::table('attendances')->where('category', 'leave')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'approved')->count(),
-            'rejected_count' => DB::table('attendances')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'rejected')->groupBy('employee_id')->count(),
-            'pending_count' => DB::table('attendances')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'pending')->groupBy('employee_id')->count(),
-        ];
+        // $attendanceSummary = [
+        //     'sick_count' => DB::table('attendances')->where('category', 'sick')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'approved')->count(),
+        //     'present_count' => DB::table('attendances')->where('category', 'present')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('type', 'check in')->where('status', 'approved')->count(),
+        //     'permission_count' => DB::table('attendances')->where('category', 'permission')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'approved')->count(),
+        //     'leave_count' => DB::table('attendances')->where('category', 'leave')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'approved')->count(),
+        //     'rejected_count' => DB::table('attendances')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'rejected')->groupBy('employee_id')->count(),
+        //     'pending_count' => DB::table('attendances')->where('date', '>=', $date1)->where('date', '<=', $date2)->where('employee_id', $employee_id)->where('status', 'pending')->groupBy('employee_id')->count(),
+        // ];
 
         // $attendances->each(function ($item, $key) {
         //     $item['status'] = null;
@@ -281,7 +281,7 @@ class AttendancesByEmployeeExport implements FromView
 
         return [
             'attendances' => $attendances,
-            'summary' => $attendanceSummary,
+            // 'summary' => $attendanceSummary,
             'pending_attendances' => $pendingAttendances
         ];
     }

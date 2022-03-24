@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\OvertimeSubmission;
 use App\Models\PermissionCategory;
+use Carbon\Carbon;
+use Error;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -96,13 +100,41 @@ class OvertimeSubmissionController extends Controller
      */
     public function store(Request $request)
     {
+        DB::beginTransaction();
         try {
+            $generalDate = $request->date;
+
+            $startDate = $generalDate;
+            $endDate = $generalDate;
+            $overtimeStart = $request->overtime_start;
+            $overtimeEnd = $request->overtime_end;
+
+            if ($overtimeEnd < $overtimeStart) {
+                $endDate = Carbon::parse($endDate)->addDay()->format('Y-m-d');
+            }
+
+            $carbonStartDate = Carbon::parse($startDate . ' ' . $overtimeStart);
+            $carbonEndDate = Carbon::parse($endDate . ' ' . $overtimeEnd);
+
+            $duration = 0;
+
+            $diffMinutes = $carbonStartDate->diffInMinutes($carbonEndDate);
+
+            $x = $diffMinutes % 30; // 0
+            $y = ($diffMinutes - $x) / 30; // 3 
+
+            if ($y > 0) {
+                $z = ($diffMinutes - $x) - 30; // (90 - 0) - 30 = 60
+                $duration = 1 + floor($z / 60); // 1 + floor(60 / 60) = 2
+            }
+
             $overtimeSubmission = new OvertimeSubmission;
             $overtimeSubmission->date_of_filing = $request->date_of_filing;
             $overtimeSubmission->employee_id = $request->employee_id;
             $overtimeSubmission->date = $request->date;
             $overtimeSubmission->overtime_start = $request->overtime_start;
             $overtimeSubmission->overtime_end = $request->overtime_end;
+            $overtimeSubmission->duration = $duration;
             $overtimeSubmission->work = $request->work;
             $overtimeSubmission->note = $request->note;
             $overtimeSubmission->status = $request->status;
@@ -114,12 +146,32 @@ class OvertimeSubmissionController extends Controller
 
             $overtimeSubmission->save();
 
+            if ($overtimeSubmission->status == 'approved') {
+                $checkout = Attendance::query()
+                    ->where('date', $generalDate)
+                    ->where('employee_id', $request->employee_id)
+                    ->where('type', 'check out')
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                if ($checkout == null) {
+                    throw new Exception('Tidak ditemukan data absensi clock out di tanggal ' . $generalDate);
+                }
+
+                $newCheckout = Attendance::find($checkout->id);
+                $newCheckout->overtime_submission_duration += $duration;
+                $newCheckout->save();
+            }
+
+            DB::commit();
+
             return response()->json([
                 'message' => 'Data has been saved',
                 'error' => true,
                 'code' => 200,
             ]);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Internal Error',
                 'error' => true,
@@ -177,13 +229,41 @@ class OvertimeSubmissionController extends Controller
      */
     public function update(Request $request, $id)
     {
+        DB::beginTransaction();
         try {
+            $generalDate = $request->date;
+
+            $startDate = $generalDate;
+            $endDate = $generalDate;
+            $overtimeStart = $request->overtime_start;
+            $overtimeEnd = $request->overtime_end;
+
+            if ($overtimeEnd < $overtimeStart) {
+                $endDate = Carbon::parse($endDate)->addDay()->format('Y-m-d');
+            }
+
+            $carbonStartDate = Carbon::parse($startDate . ' ' . $overtimeStart);
+            $carbonEndDate = Carbon::parse($endDate . ' ' . $overtimeEnd);
+
+            $duration = 0;
+
+            $diffMinutes = $carbonStartDate->diffInMinutes($carbonEndDate);
+
+            $x = $diffMinutes % 30; // 0
+            $y = ($diffMinutes - $x) / 30; // 3 
+
+            if ($y > 0) {
+                $z = ($diffMinutes - $x) - 30; // (90 - 0) - 30 = 60
+                $duration = 1 + floor($z / 60); // 1 + floor(60 / 60) = 2
+            }
+
             $overtimeSubmission = OvertimeSubmission::find($id);
             $overtimeSubmission->date_of_filing = $request->date_of_filing;
             $overtimeSubmission->employee_id = $request->employee_id;
             $overtimeSubmission->date = $request->date;
             $overtimeSubmission->overtime_start = $request->overtime_start;
             $overtimeSubmission->overtime_end = $request->overtime_end;
+            $overtimeSubmission->duration = $duration;
             $overtimeSubmission->work = $request->work;
             $overtimeSubmission->note = $request->note;
             $overtimeSubmission->status = $request->status;
@@ -195,12 +275,32 @@ class OvertimeSubmissionController extends Controller
 
             $overtimeSubmission->save();
 
+            if ($overtimeSubmission->status == 'approved') {
+                $checkout = Attendance::query()
+                    ->where('date', $generalDate)
+                    ->where('employee_id', $request->employee_id)
+                    ->where('type', 'check out')
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                if ($checkout == null) {
+                    throw new Exception('Tidak ditemukan data absensi clock out di tanggal ' . $generalDate);
+                }
+
+                $newCheckout = Attendance::find($checkout->id);
+                $newCheckout->overtime_submission_duration += $duration;
+                $newCheckout->save();
+            }
+
+            DB::commit();
+
             return response()->json([
                 'message' => 'Data has been saved',
                 'error' => true,
                 'code' => 200,
             ]);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Internal Error',
                 'error' => true,

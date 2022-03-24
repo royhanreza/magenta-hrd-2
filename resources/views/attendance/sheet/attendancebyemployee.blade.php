@@ -2,9 +2,12 @@
     <thead>
         <tr>
             <th>Tanggal</th>
-            <th>Status</th>
+            <th>Status Hari</th>
+            <th>Status Kehadiran</th>
             <th>Jam Masuk</th>
             <th>Jam Keluar</th>
+            <th>Keterlambatan (Menit)</th>
+            <th>Lembur (Jam)</th>
         </tr>
     </thead>
     <tbody>
@@ -17,6 +20,7 @@
             $year = $explodedDate[0];
             @endphp
             <td>{{ (int) $day }} {{ Helper::prettyMonth((int) $month - 1, "id") }} {{ $year }}</td>
+            <td>{{ $att['day_status'] }}</td>
             @if($att['attendance'] !== null)
             <td>
                 @if($att['attendance']['status'] == 'present')
@@ -37,8 +41,12 @@
             </td>
             <td>{{ $att['attendance']['clock_in'] }}</td>
             <td>{{ $att['attendance']['clock_out'] }}</td>
+            <td>{{ $att['attendance']['minutes_of_delay'] }}</td>
+            <td>{{ $att['attendance']['overtime'] }}</td>
             @else
             <td class="text-center"><span class="badge badge-light">N/A</span></td>
+            <td class="text-center">-</td>
+            <td class="text-center">-</td>
             <td class="text-center">-</td>
             <td class="text-center">-</td>
             @endif

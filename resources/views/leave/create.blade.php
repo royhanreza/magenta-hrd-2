@@ -107,12 +107,12 @@
                         <input type="text" v-model="leaveTaken" class="form-control form-control-sm" readonly required>
                       </div>
                     </div>
-                    <div class="form-group row justify-content-between">
+                    <!-- <div class="form-group row justify-content-between">
                       <label class="col-sm-3 col-form-label">Cuti Telah Diambil Bulan Ini</label>
                       <div class="col-sm-9">
                         <input type="text" v-model="leaveTakenCurrentMonth" class="form-control form-control-sm" readonly required>
                       </div>
-                    </div>
+                    </div> -->
                     <!-- <div class="form-group row justify-content-between">
                       <label for="first-name" class="col-sm-3 col-form-label">Jenis Izin<sup class="text-danger">*</sup></label>
                       <div class="col-sm-9">
@@ -187,7 +187,7 @@
                     <input type="checkbox" class="custom-control-input" v-model="approve"><span class="custom-control-label" style="margin-top: 3px"><strong>Setujui</strong></span>
                   </label>
                 </div>
-                <button type="submit" class="btn btn-primary px-5" v-bind:disabled="loading || totalTakenLeave > leaveAllowance"><span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>&nbsp;Save</button>
+                <button type="submit" class="btn btn-primary px-5" v-bind:disabled="loading || isOverTaken"><span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>&nbsp;Save</button>
               </div>
             </div>
           </form>
@@ -361,6 +361,9 @@
       },
       totalTakenLeave: function() {
         return this.fullDayLeaveDates.length + (this.halfDayLeaveDates.length / 2);
+      },
+      isOverTaken() {
+        return this.totalTakenLeave > (this.leaveAllowance - this.leaveTaken)
       }
     }
   })

@@ -248,7 +248,7 @@
             employee: '',
             categories: [],
             overtime: {
-                date: '',
+                date: new Date,
                 start: '',
                 end: '',
                 work: '',
@@ -285,6 +285,8 @@
                     status: vm.status,
                 }
 
+                // console.log(data)
+
                 if (vm.overtime.date) {
                     const date = vm.overtime.date;
                     var day = ('0' + date.getDate()).slice(-2);
@@ -320,10 +322,11 @@
                     })
                     .catch(function(error) {
                         vm.loading = false;
+                        const message = error.response.data.errors || 'Something wrong';
                         // console.log(error.response);
                         Swal.fire(
                             'Oops!',
-                            'Something wrong',
+                            message,
                             'error'
                         )
                     });
@@ -376,7 +379,8 @@
 
         $('#overtime-date').datepicker({
             format: 'yyyy-mm-dd',
-        }).on('changeDate', function(e) {
+            autoClose: true,
+        }).datepicker("setDate", 'now').on('changeDate', function(e) {
             // `e` here contains the extra attributes
             console.log(e);
             app.$data.overtime.date = e.date;

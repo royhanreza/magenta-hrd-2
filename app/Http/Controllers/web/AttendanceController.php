@@ -4,6 +4,7 @@ namespace App\Http\Controllers\web;
 
 use App\Exports\AttendancesExport;
 use App\Exports\AttendancesByEmployeeExport;
+use App\Exports\AttendancesByEmployeeExport2;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -92,6 +93,7 @@ class AttendanceController extends Controller
             $item['clock_in'] = null;
             $item['clock_out'] = null;
             $item['overtime_duration'] = 0;
+            $item['overtime_submission_duration'] = 0;
             $item['checkin_id'] = null;
             $item['checkout_id'] = null;
             $item['note'] = null;
@@ -118,6 +120,7 @@ class AttendanceController extends Controller
                         } else if ($att->type == 'check out') {
                             $item['clock_out'] = date_format(date_create($att->clock_out), "H:i:s");
                             $item['overtime_duration'] = $att->overtime_duration;
+                            $item['overtime_submission_duration'] = $att->overtime_submission_duration;
                             $item['checkout_id'] = $att->id;
                         }
                     } else if ($att->category == 'sick') {
@@ -319,6 +322,38 @@ class AttendanceController extends Controller
         }
     }
 
+    public function updateOvertimeSubmission(Request $request, $id)
+    {
+        $attendance = Attendance::find($id);
+
+        if (is_null($attendance)) {
+            return response()->json([
+                'message' => 'timesheet not found',
+                'error' => true,
+                'code' => 404,
+            ], 404);
+        }
+
+
+        try {
+            $attendance->overtime_submission_duration = $request->overtime_submission_duration;
+
+            $attendance->save();
+            return response()->json([
+                'message' => 'overtime has been updated',
+                'error' => false,
+                'code' => 200,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'internal error',
+                'error' => true,
+                'code' => 500,
+                'errors' => $e,
+            ], 500);
+        }
+    }
+
     public function updateClockIn(Request $request, $id)
     {
         if ($id == "null") {
@@ -479,7 +514,7 @@ class AttendanceController extends Controller
         $endDate = $request->query('end_date');
         if ($request->query('employee_id') !== null) {
             $employee = Employee::findOrFail($employee_id);
-            return Excel::download(new AttendancesByEmployeeExport($employee_id, $startDate, $endDate), 'Absensi - ' . $employee->employee_id . '-' . $employee->first_name . '.xlsx');
+            return Excel::download(new AttendancesByEmployeeExport2($employee_id, $startDate, $endDate), 'Absensi - ' . $employee->employee_id . '-' . $employee->first_name . '.xlsx');
         }
 
         return abort(404);

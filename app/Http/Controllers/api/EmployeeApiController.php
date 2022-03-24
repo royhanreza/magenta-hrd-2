@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\Calendar;
 use App\Models\Employee;
 use App\Models\Event;
 use App\Models\FinalPayslip;
@@ -281,7 +282,7 @@ class EmployeeApiController extends Controller
                 } else if ($attendance->category == 'leave') {
                     $category = 'leave';
                 }
-                $photos=$attendance->photo;
+                $photos = $attendance->photo;
 
                 if ($attendance->type == 'check in') {
                     $checkInStatus = $status;
@@ -301,7 +302,7 @@ class EmployeeApiController extends Controller
                     $checkInOfficeLatitude = $attendance->office_latitude;
                     $checkInOfficeLongitude = $attendance->office_longitude;
                     // if($attendance->image !== null) {
-                        $checkInImage = $attendance->image;
+                    $checkInImage = $attendance->image;
                     // }
                 } else if ($attendance->type == 'check out') {
                     $checkOutStatus = $status;
@@ -322,15 +323,14 @@ class EmployeeApiController extends Controller
                     $checkOutOfficeLatitude = $attendance->office_latitude;
                     $checkOutOfficeLongitude = $attendance->office_longitude;
                     // if($attendance->image !== null) {
-                        $checkOutImage = $attendance->image;
+                    $checkOutImage = $attendance->image;
                     // }
-                    
-                }
 
+                }
             }
 
             return [
-             
+
                 'date' => $date,
                 'checkin_category' => $checkInCategory,
                 'checkout_category' => $checkOutCategory,
@@ -380,8 +380,6 @@ class EmployeeApiController extends Controller
         return [
             'attendances' => $attendances,
         ];
-
-
     }
 
     // CHANGE PASSWORD
@@ -569,9 +567,13 @@ class EmployeeApiController extends Controller
             $leave = $employee->leaves->where('is_active', 1)->first();
             $takenLeaveCurrentMonth = $employee->attendances->where('category', 'leave')->where('status', 'approved')->whereBetween('date', [date("Y-m-01"), date("Y-m-t")])->all();
 
+            // $leaveSubmissionsCount = Leave::query()->where('leave_dates', 'like', '%' . $year . '%')
+            $calendarWithLeaveSubmissionsCount = Calendar::whereYear('date', date('Y'))->where('with_leave_submission', 1)->count();
+            // $calendarWithLeaveSubmissionsCount = 5;
+
             $remainingLeaves = [
                 'total_leave' => $leave->total_leave,
-                'taken_leave' => $leave->taken_leave,
+                'taken_leave' => $leave->taken_leave + $calendarWithLeaveSubmissionsCount,
                 'taken_leave_current_month' => count($takenLeaveCurrentMonth),
             ];
 

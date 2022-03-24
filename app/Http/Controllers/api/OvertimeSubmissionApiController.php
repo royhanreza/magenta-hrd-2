@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\OvertimeSubmission;
 use Exception;
 use Illuminate\Http\Request;
@@ -103,9 +104,13 @@ class OvertimeSubmissionApiController extends Controller
 
     public function approve($id)
     {
-        $overtimeSubmissions = OvertimeSubmission::find($id);
+        $overtimeSubmission = OvertimeSubmission::find($id);
 
-        if ($overtimeSubmissions == null) {
+        $generalDate = $overtimeSubmission->date;
+        $employeeId = $overtimeSubmission->employee_id;
+        $duration = $overtimeSubmission->duration;
+
+        if ($overtimeSubmission == null) {
             return response()->json([
                 'message' => 'Sick submission not found',
                 'error' => true,
@@ -114,9 +119,25 @@ class OvertimeSubmissionApiController extends Controller
         }
 
         try {
-            $overtimeSubmissions->status = 'approved';
+            $overtimeSubmission->status = 'approved';
             // $sickSubmission->description = $description;
-            $overtimeSubmissions->save();
+
+            $checkout = Attendance::query()
+                ->where('date', $generalDate)
+                ->where('employee_id', $employeeId)
+                ->where('type', 'check out')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($checkout == null) {
+                throw new Exception('Tidak ditemukan data absensi clock out di tanggal ' . $generalDate);
+            }
+
+            $newCheckout = Attendance::find($checkout->id);
+            $newCheckout->overtime_submission_duration += $duration;
+            $newCheckout->save();
+
+            $overtimeSubmission->save();
             return response()->json([
                 'message' => 'Data has been saved',
                 'error' => true,

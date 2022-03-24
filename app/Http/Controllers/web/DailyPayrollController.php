@@ -346,6 +346,10 @@ class DailyPayrollController extends Controller
         // return $this->getDatesFromRange($startDatePeriod, $endDatePeriod);
         $calendars = Calendar::all();
 
+        // $employee = Employee::find(9);
+
+        // return $attendances = $this->mergeAttendances($employee->attendances, $employee, $calendars);
+
         foreach ($employees as $employee) {
 
             $attendances = $this->mergeAttendances($employee->attendances, $employee, $calendars);
@@ -384,13 +388,13 @@ class DailyPayrollController extends Controller
                                 'category' => null,
                                 'minutes_of_delay' => 0,
                             ],
-                            'day_status' => $this->getDayStatus($employee, $item, $calendars),
+                            'day_status' => $dayStatus,
                         ];
                     } else {
                         return [
                             'date' => $item,
                             'attendance' => null,
-                            'day_status' => $this->getDayStatus($employee, $item, $calendars),
+                            'day_status' => $dayStatus,
                         ];
                     }
                 }
@@ -545,7 +549,9 @@ class DailyPayrollController extends Controller
                         $clockIn = date_format(date_create($att->clock_in), "H:i:s");
                     } else if ($att->type == 'check out') {
                         $clockOut = date_format(date_create($att->clock_out), "H:i:s");
-                        $overtime = $att->overtime_duration;
+                        // !OVERTIME_SUBMISSION
+                        // $overtime = $att->overtime_duration;
+                        $overtime = $att->overtime_submission_duration;
                     }
                     // }
                 }
