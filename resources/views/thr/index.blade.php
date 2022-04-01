@@ -97,8 +97,8 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
                         <span class="input-group-text" id="inputGroup-sizing-sm">Tahun</span>
                       </div>
                       <select @change="navigate" v-model="year" class="form-control pr-3" dir="rtl">
-                        <option value="2020">2020</option>
-                        <option value="2021">2021</option>
+                        @for($i=2020; $i <= date("Y"); $i++ ) <option value="{{ $i }}">{{ $i }}</option>
+                          @endfor
                       </select>
                     </div>
                   </div>
@@ -569,6 +569,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
       // }
     }
   })
+</script>
+<script>
+  $('.use-datatable').DataTable();
 </script>
 
 @endsection

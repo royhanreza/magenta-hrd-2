@@ -550,8 +550,8 @@ class DailyPayrollController extends Controller
                     } else if ($att->type == 'check out') {
                         $clockOut = date_format(date_create($att->clock_out), "H:i:s");
                         // !OVERTIME_SUBMISSION
-                        // $overtime = $att->overtime_duration;
-                        $overtime = $att->overtime_submission_duration;
+                        $overtime = $att->overtime_duration;
+                        // $overtime = $att->overtime_submission_duration;
                     }
                     // }
                 }

@@ -51,7 +51,7 @@ class ThrController extends Controller
 
         $previewPayslips = Career::query()
             ->whereHas('employee', function ($q) use ($minimumDate) {
-                $q->where('start_work_date', '<=', $minimumDate);
+                $q->where('start_work_date', '<=', $minimumDate)->where('is_active', 1)->where('id', '!=', 103);
             })
             ->whereHas('payslips')
             ->where('is_active', 1)
