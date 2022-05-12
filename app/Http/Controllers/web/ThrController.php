@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\web;
 
+use App\Exports\ThrExport;
 use App\Http\Controllers\Controller;
 use App\Models\Career;
 use App\Models\Employee;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ThrController extends Controller
 {
@@ -315,5 +317,20 @@ class ThrController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function exportReport(Request $request)
+    {
+        $startDatePeriod = $request->query('start_date_period');
+        $endDatePeriod = $request->query('end_date_period');
+        $staffOnly = $request->query('staffonly');
+
+        // $employees = Employee::with(['npwp', 'activeCareer', 'activeCareer' => function ($query) {
+        //     $query->with(['designation', 'department', 'jobTitle']);
+        // }, 'finalPayslips' => function ($query) use ($startDatePeriod, $endDatePeriod) {
+        //     $query->where('type', 'fix_period')->where('start_date_period', $startDatePeriod)->where('end_date_period', $endDatePeriod);
+        // }])->get();
+
+        return Excel::download(new ThrExport($startDatePeriod, $endDatePeriod, $staffOnly), 'Laporan Gaji THR ' . $startDatePeriod . ' - ' . $endDatePeriod . '.xlsx');
     }
 }

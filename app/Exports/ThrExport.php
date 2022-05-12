@@ -96,7 +96,7 @@ class ThrPerCompanySheet implements FromView, WithTitle, ShouldAutoSize
         $employees = Employee::with(['npwp', 'activeCareer', 'loans', 'activeCareer' => function ($query) {
             $query->with(['designation', 'department', 'jobTitle']);
         }, 'finalPayslips' => function ($query) {
-            $query->where('type', 'fix_period')->where('start_date_period', $this->startDatePeriod)->where('end_date_period', $this->endDatePeriod);
+            $query->where('type', 'thr')->where('start_date_period', $this->startDatePeriod)->where('end_date_period', $this->endDatePeriod);
         }])
             ->whereNotIn('type', $excludeType)
             ->where('employee_id', 'like', $this->initial . '%')
@@ -104,42 +104,19 @@ class ThrPerCompanySheet implements FromView, WithTitle, ShouldAutoSize
             ->get()
             ->each(function ($employee) {
                 $basicSalary = 0;
-                $positionAllowance = 0;
-                $attendanceAllowance = 0;
-                $loan = 0;
-                $excessLeave = 0;
-                $total = 0;
-                $tes = 'PAYSLIP < 0';
-                $totalLoan = collect($employee->loans)->where('type', 'loan')->where('payslip_date', '<', $this->endDatePeriod)->sum('amount');
-                $totalPayment = collect($employee->loans)->where('type', 'payment')->where('payslip_date', '<', $this->endDatePeriod)->sum('amount');
-                $loanBalance = $totalLoan - $totalPayment;
 
                 if (count($employee->finalPayslips) > 0) {
                     $payslip = collect($employee->finalPayslips)->first();
                     $incomes = json_decode($payslip->income);
-                    $deductions = json_decode($payslip->deduction);
-                    $basicSalary = collect($incomes)->where('type', 'gaji pokok')->sum('value');
-                    $positionAllowance = collect($incomes)->where('name', 'Tunjangan Jabatan')->sum('value');
-                    $attendanceAllowance = collect($incomes)->where('name', 'Insentif Kehadiran')->sum('value');
-                    $loan = collect($deductions)->where('is_loan', 1)->sum('value');
-                    $excessLeave = collect($deductions)->where('is_excess_leave', 1)->sum('value');
-                    $total = ($basicSalary + $positionAllowance + $attendanceAllowance) - ($loan + $excessLeave);
-                    // $attendanceAllowance = collect($incomes)->where('name', 'Insentif Kehadiran');
-                    $tes = 'PAYSLIP > 0';
+                    $value = collect($incomes)->first();
+                    if (isset($value->value)) {
+                        $basicSalary = $value->value;
+                    }
                 }
 
                 $employee['basic_salary'] = $basicSalary;
-                $employee['position_allowance'] = $positionAllowance;
-                $employee['attendance_allowance'] = $attendanceAllowance;
-                $employee['loan'] = $loan;
-                $employee['total_loan'] = $totalLoan;
-                $employee['loan_balance'] = $loanBalance;
-                $employee['excess_leave'] = $excessLeave;
-                // $employee['tes'] = 'sadasdasd';
-                $employee['total'] = $total;
-                $employee['tes'] = $tes;
             });
-        return view('payroll.report.monthly', [
+        return view('thr.report', [
             // 'invoices' => Invoice::all()
             'employees' => $employees,
             'start_date' => $this->startDatePeriod,
@@ -154,57 +131,4 @@ class ThrPerCompanySheet implements FromView, WithTitle, ShouldAutoSize
     {
         return $this->initial;
     }
-
-    // public function determineCompany($initial)
-    // {
-    //     switch($initial) {
-    //         case 'MM':
-    //             return 'Magenta Mediatama';
-    //     }
-    // }
-
-    // public function exportMonthlyReport(Request $request)
-    // {
-    //     $startDatePeriod = $request->query('start_date_period');
-    //     $endDatePeriod = $request->query('end_date_period');
-
-    //     $employees = Employee::with(['npwp', 'activeCareer', 'activeCareer' => function ($query) {
-    //         $query->with(['designation', 'department', 'jobTitle']);
-    //     }, 'finalPayslips' => function ($query) use ($startDatePeriod, $endDatePeriod) {
-    //         $query->where('type', 'fix_period')->where('start_date_period', $startDatePeriod)->where('end_date_period', $endDatePeriod);
-    //     }])->get();
-    //     // ->where('employee_id', 'like', 'MM' . '%')
-    //     // ->get()->each(function ($employee) {
-    //     //     $basicSalary = 0;
-    //     //     $positionAllowance = 0;
-    //     //     $attendanceAllowance = 0;
-    //     //     $loan = 0;
-    //     //     $excessLeave = 0;
-    //     //     $total = 0;
-
-    //     //     if (count($employee->finalPayslips) > 0) {
-    //     //         $payslip = collect($employee->finalPayslips)->first();
-    //     //         $incomes = json_decode($payslip->income);
-    //     //         $deductions = json_decode($payslip->deduction);
-    //     //         $basicSalary = collect($incomes)->where('type', 'gaji pokok')->sum('value');
-    //     //         $positionAllowance = collect($incomes)->where('name', 'Tunjangan Jabatan')->sum('value');
-    //     //         $attendanceAllowance = collect($incomes)->where('name', 'Insentif Kehadiran')->sum('value');
-    //     //         $loan = collect($deductions)->where('is_loan', 1)->sum('value');
-    //     //         $excessLeave = collect($deductions)->where('is_excess_leave', 1)->sum('value');
-    //     //         $total = ($basicSalary + $positionAllowance + $attendanceAllowance) - ($loan + $excessLeave);
-    //     //         $attendanceAllowance = collect($incomes)->where('name', 'Insentif Kehadiran');
-    //     //     }
-
-    //     //     $employee['basic_salary'] = $basicSalary;
-    //     //     $employee['position_allowance'] = $positionAllowance;
-    //     //     $employee['attendance_allowance'] = $attendanceAllowance;
-    //     //     $employee['loan'] = $loan;
-    //     //     $employee['excess_leave'] = $excessLeave;
-    //     //     $employee['total'] = $total;
-    //     // });
-
-    //     // return $employees;
-
-    //     return Excel::download(new PayrollReportExport($startDatePeriod, $endDatePeriod), 'Laporan Gaji ' . $startDatePeriod . ' - ' . $endDatePeriod . '.xlsx');
-    // }
 }

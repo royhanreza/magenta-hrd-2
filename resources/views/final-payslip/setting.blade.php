@@ -104,9 +104,9 @@
                       <td>{{ $payslip->employee->careers[0]->department->name }}</td>
                       <td>{{ $payslip->employee->careers[0]->designation->name }}</td>
                       @if(count($payslip->employee->careers) > 0)
-                        @if($payslip->employee->careers[0]->jobTitle !== null)
+                      @if($payslip->employee->careers[0]->jobTitle !== null)
                       <td>{{ $payslip->employee->careers[0]->jobTitle->name }}</td>
-                        @endif
+                      @endif
                       @endif
                       @else
                       <td></td>
@@ -276,10 +276,19 @@
       </div>
       <form @submit.prevent="addIncome">
         <div class="modal-body">
-          <div class="form-group row">
+          <!-- <div class="form-group row">
             <label class="col-sm-4 col-form-label">Nama Pendapatan</label>
             <div class="col-sm-8">
               <input type="text" v-model="incomeModel.name" class="form-control form-control-sm" required>
+            </div>
+          </div> -->
+          <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Kolom</label>
+            <div class="col-sm-8">
+              <select v-model="incomeModel.column" class="form-control">
+                <option value="presence_allowance">Insentif Kehadiran</option>
+                <option value="position_allowance">Tunjangan Jabatan</option>
+              </select>
             </div>
           </div>
           <div class="form-group row">
@@ -332,10 +341,18 @@
       </div>
       <form @submit.prevent="addDeduction">
         <div class="modal-body">
-          <div class="form-group row">
+          <!-- <div class="form-group row">
             <label class="col-sm-4 col-form-label">Nama Potongan</label>
             <div class="col-sm-8">
               <input type="text" v-model="deductionModel.name" class="form-control form-control-sm" required>
+            </div>
+          </div> -->
+          <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Kolom</label>
+            <div class="col-sm-8">
+              <select v-model="deductionModel.column" class="form-control">
+                <option value="excess_leave">Kelebihan Cuti</option>
+              </select>
             </div>
           </div>
           <div class="form-group row">
@@ -458,6 +475,7 @@
       incomeModel: {
         name: '',
         value: '',
+        column: 'presence_allowance',
         adder: 1,
         tax: 0,
         loading: false,
@@ -465,6 +483,7 @@
       deductionModel: {
         name: '',
         value: '',
+        column: 'excess_leave',
         taxDeduction: 0,
         loading: false,
       },
@@ -478,7 +497,23 @@
       },
     },
     methods: {
+      determineName(column) {
+        switch (column) {
+          case 'presence_allowance':
+            return 'Insentif Kehadiran';
+            break;
+          case 'position_allowance':
+            return 'Tunjangan Jabatan';
+            break;
+          case 'excess_leave':
+            return 'Kelebihan Cuti';
+            break;
+          default:
+            return 'Pendapatan Lainnya';
+        }
+      },
       addIncome: function() {
+        const self = this;
         this.incomeModel.loading = true;
         // const newIncome = this.incomes.push({
         //   name: this.incomeModel.name,
@@ -488,12 +523,16 @@
         //   is_added: 1,
         // })
         const newIncome = [...this.incomes, {
-          name: this.incomeModel.name,
+          name: this.determineName(this.incomeModel.column),
           value: this.incomeModel.value,
+          column: this.incomeModel.column,
           adder: this.incomeModel.adder,
           tax: this.incomeModel.tax,
           is_added: 1,
         }]
+
+        // console.log(newIncome);
+        // return;
         // this.incomeModel.loading = false;
         // console.log(newIncome);
         let vm = this;
@@ -575,16 +614,19 @@
       },
       // DEDUCTION
       addDeduction: function() {
+        const self = this;
         this.deductionModel.loading = true;
         const newDeduction = [...this.deductions, {
-          name: this.deductionModel.name,
+          // name: this.deductionModel.name,
+          name: this.determineName(this.deductionModel.column),
           value: this.deductionModel.value,
+          is_excess_leave: this.deductionModel.column == 'excess_leave' ? 1 : 0,
           tax_deduction: this.deductionModel.taxDeduction,
           is_added: 1,
         }]
 
         let vm = this;
-        axios.patch('/final-payslip/{{$payslip->id}}/delete-deduction', {
+        axios.patch('/final-payslip/{{$payslip->id}}/add-deduction', {
             deduction: newDeduction,
           })
           .then(function(response) {

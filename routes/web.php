@@ -462,6 +462,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('thr')->group(function () {
         Route::get('/', [ThrController::class, 'index']);
         Route::post('/', [ThrController::class, 'store']);
+        Route::get('/export/report/monthly', [ThrController::class, 'exportReport']);
     });
 
     // THR

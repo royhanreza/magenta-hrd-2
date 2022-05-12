@@ -87,6 +87,9 @@ $userLoginPermissions = request()->session()->get('userLoginPermissions');
           <div class="card">
             <div class="card-header d-flex">
               <h5 class="card-header-title">Tunjangan Hari Raya (THR)</h5>
+              <div class="toolbar ml-auto">
+                <a href="/thr/export/report/monthly?start_date_period={{ $start_date_period }}&end_date_period={{ $end_date_period }}&staffonly={{ request()->query('staffonly') !== null ? request()->query('staffonly') : 'false' }}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-fw fa-file-alt"></i> Download Laporan(.xlsx)</a>
+              </div>
             </div>
             <div class="card-body">
               <form>
