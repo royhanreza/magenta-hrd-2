@@ -15,6 +15,7 @@ use DatePeriod;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -63,14 +64,19 @@ class AttendanceController extends Controller
 
         $date = date_format(date_create($date), "Y-m-d");
 
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
         // $attendances = Attendance::with(['employee' => function ($query) use ($employeeColumns) {
         //     $query->select($employeeColumns)->with('designation.department.company');
         // }])->orderBy('created_at', 'DESC')->get();
-        $attendances = Employee::select($employeeColumns)->with(['careers' => function ($query) {
-            $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
-        }, 'attendances' => function ($query) use ($date) {
-            $query->where('date', $date);
-        }])->where('is_active', 1)->get();
+        $attendances = Employee::select($employeeColumns)
+            ->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)
+            ->with(['careers' => function ($query) {
+                $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
+            }, 'attendances' => function ($query) use ($date) {
+                $query->where('date', $date);
+            }])->where('is_active', 1)->get();
 
         // return $attendances;
 

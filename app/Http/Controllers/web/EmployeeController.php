@@ -45,6 +45,11 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        // return $eoOnly;
+
         $statusQuery = $request->query('status');
         $departmentQuery = $request->query('department');
         $departmentSelectionsQuery = json_decode($request->query('dpr_slc'));
@@ -78,13 +83,14 @@ class EmployeeController extends Controller
             //         $query->whereIn('id', $departmentSelectionsQuery);
             //     }
             // })
+            ->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)
             ->with(['careers' => function ($query) {
                 $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
             }])->where($employeeWhereClauses)->paginate(10);
         // $active_employees = $employees->filter(function ($value, $key) {
         //     return $value > 2;
         // });
-        $all_employees = Employee::all();
+        $all_employees = Employee::query()->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)->get();
         $active_employees = $all_employees->filter(function ($item, $key) {
             return $item->is_active == 1;
         });
@@ -110,16 +116,20 @@ class EmployeeController extends Controller
         // Get the search value from the request
         $search = $request->input('keyword');
 
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
         // Search in the title and body columns from the posts table
         $employees = Employee::query()
             ->with(['careers' => function ($query) {
                 $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
             }])
+            ->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)
             ->where('first_name', 'LIKE', "%{$search}%")
             ->orWhere('employee_id', 'LIKE', "%{$search}%")
             ->paginate(10);
 
-        $all_employees = Employee::all();
+        $all_employees = Employee::query()->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)->get();
         $active_employees = $all_employees->filter(function ($item, $key) {
             return $item->is_active == 1;
         });

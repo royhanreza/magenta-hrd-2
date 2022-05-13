@@ -10,6 +10,7 @@ use App\Models\PermissionCategory;
 use Carbon\Carbon;
 use Error;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +43,12 @@ class OvertimeSubmissionController extends Controller
 
         $statusQuery = $request->query('status');
 
-        $overtimeSubmissions = OvertimeSubmission::with(['employee']);
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        $overtimeSubmissions = OvertimeSubmission::query()->whereHas('employee', function (Builder $q) use ($eoOnly) {
+            $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+        })->with(['employee']);
         if ($statusQuery !== null) {
             $overtimeSubmissions->where('status', $statusQuery);
         }
@@ -88,7 +94,10 @@ class OvertimeSubmissionController extends Controller
      */
     public function create()
     {
-        $employees = Employee::all();
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+        // $eoOnly = 0;
+        $employees = Employee::query()->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)->get();
         return view('overtime-submission.create', ['employees' => $employees]);
     }
 

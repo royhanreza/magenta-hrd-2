@@ -16,6 +16,7 @@ use DatePeriod;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
@@ -328,6 +329,10 @@ class DailyPayrollController extends Controller
 
         $employeeColumns = ['id', 'employee_id', 'first_name', 'last_name', 'work_placement', 'start_work_date', 'photo', 'daily_money_regular', 'daily_money_holiday', 'overtime_pay_regular', 'overtime_pay_holiday'];
 
+
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
         $employees = Employee::query()->select($employeeColumns)->with(['attendances' => function ($query) use ($startDatePeriod, $endDatePeriod) {
             $query->whereBetween('date', [$startDatePeriod, $endDatePeriod]);
         }, 'officeShifts' => function ($query) {
@@ -335,6 +340,7 @@ class DailyPayrollController extends Controller
         }, 'careers' => function ($query) {
             $query->with(['jobTitle', 'designation'])->where('is_active', 1);
         }])
+            ->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)
             ->where('type', 'non staff')
             ->orWhere('type', 'freelancer')
             ->get();

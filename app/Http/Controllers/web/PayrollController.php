@@ -17,6 +17,7 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -201,11 +202,13 @@ class PayrollController extends Controller
         // $endDatePeriod = '2021-06-10';
         // $months = ['Januari', 'Februari', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         // return $payslips;
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
 
         $previewPayslips = Career::whereHas('payslips', function ($q) use ($id) {
             $q->where('pay_slip_id', $id);
         })
-            ->whereHas('employee', function ($q) use ($id, $permissions, $staffOnly) {
+            ->whereHas('employee', function (Builder $q) use ($id, $permissions, $staffOnly, $eoOnly) {
                 // $q->where('type', 'non staff')->orWhere('type', 'staff')->where('is_active', 1);
                 // $q->where('type', '!=', 'freelancer')->where('is_active', 1);
                 $excludeType = ['freelancer'];
@@ -217,7 +220,7 @@ class PayrollController extends Controller
                     }
                 }
 
-                $q->whereNotIn('type', $excludeType)->where('is_active', 1);
+                $q->whereNotIn('type', $excludeType)->where('is_active', 1)->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
             })
             ->where('is_active', 1)
             ->with(['employee' => function ($q) use ($employeeColumns, $startDatePeriod, $endDatePeriod) {

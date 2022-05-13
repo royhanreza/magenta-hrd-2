@@ -9,7 +9,9 @@ use App\Models\FinalPayslip;
 use App\Models\SalarySetting;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LeavePayroll extends Controller
@@ -48,9 +50,12 @@ class LeavePayroll extends Controller
 
         $employeeColumns = ['id', 'employee_id', 'first_name', 'last_name', 'work_placement', 'start_work_date', 'photo', 'daily_money_regular'];
 
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
         $previewPayslips = Career::query()
-            ->whereHas('employee', function ($q) use ($minimumDate) {
-                $q->where('type', 'staff')->orWhere('type', 'non staff');
+            ->whereHas('employee', function ($q) use ($minimumDate, $eoOnly) {
+                $q->where('type', 'staff')->orWhere('type', 'non staff')->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
             })
             ->whereHas('payslips')
             ->where('is_active', 1)
@@ -116,6 +121,9 @@ class LeavePayroll extends Controller
         $endDatePeriod = date(($year + 1) . '-01-01');
 
         $finalPayslips = FinalPayslip::query()
+            ->whereHas('employee', function (Builder $q) use ($eoOnly) {
+                $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+            })
             ->with(['employee' => function ($q) use ($employeeColumns) {
                 $q->select($employeeColumns);
             }])

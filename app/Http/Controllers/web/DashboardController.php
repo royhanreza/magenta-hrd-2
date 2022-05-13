@@ -8,15 +8,20 @@ use App\Models\Employee;
 use App\Models\LeaveSubmission;
 use App\Models\Permission;
 use App\Models\SickSubmission;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         // return $this->getPendingSubmission();
-        $allEmployees = Employee::all();
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        $allEmployees = Employee::where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)->get();
         $activeEmployees = $allEmployees->filter(function ($item, $key) {
             return $item->is_active == 1;
         })->count();
@@ -46,14 +51,20 @@ class DashboardController extends Controller
 
         $date = date_format(date_create($date), "Y-m-d");
 
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
         // $attendances = Attendance::with(['employee' => function ($query) use ($employeeColumns) {
         //     $query->select($employeeColumns)->with('designation.department.company');
         // }])->orderBy('created_at', 'DESC')->get();
-        $attendances = Employee::select($employeeColumns)->with(['careers' => function ($query) {
-            $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
-        }, 'attendances' => function ($query) use ($date) {
-            $query->where('date', $date);
-        }])->get();
+        $attendances = Employee::select($employeeColumns)->with(
+            ['careers' => function ($query) {
+                $query->with(['designation', 'department', 'jobTitle'])->orderByDesc('effective_date');
+            }, 'attendances' => function ($query) use ($date) {
+                $query->where('date', $date);
+            }]
+        )->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)
+            ->get();
 
         // return $attendances;
 
@@ -182,15 +193,24 @@ class DashboardController extends Controller
 
     private function getPendingSubmission()
     {
-        $sickSubmissions = SickSubmission::with(['employee'])->where('status', 'pending')->get()->map(function ($submission) {
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        $sickSubmissions = SickSubmission::whereHas('employee', function (Builder $q) use ($eoOnly) {
+            $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+        })->with(['employee'])->where('status', 'pending')->get()->map(function ($submission) {
             $submission['type'] = 'sakit';
             return $submission;
         });
-        $permissionSubmissions = Permission::with(['employee'])->where('status', 'pending')->get()->map(function ($submission) {
+        $permissionSubmissions = Permission::whereHas('employee', function (Builder $q) use ($eoOnly) {
+            $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+        })->with(['employee'])->where('status', 'pending')->get()->map(function ($submission) {
             $submission['type'] = 'izin';
             return $submission;
         });;
-        $leaveSubmissions = LeaveSubmission::with(['employee'])->where('status', 'pending')->get()->map(function ($submission) {
+        $leaveSubmissions = LeaveSubmission::whereHas('employee', function (Builder $q) use ($eoOnly) {
+            $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+        })->with(['employee'])->where('status', 'pending')->get()->map(function ($submission) {
             $submission['type'] = 'cuti';
             return $submission;
         });;

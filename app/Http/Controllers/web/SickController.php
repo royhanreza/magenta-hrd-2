@@ -9,7 +9,9 @@ use App\Models\Permission;
 use App\Models\PermissionCategory;
 use App\Models\SickSubmission;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\Datatables\Datatables;
@@ -43,7 +45,14 @@ class SickController extends Controller
 
         $statusQuery = $request->query('status');
 
-        $sickSubmissions = SickSubmission::with(['employee']);
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        $sickSubmissions = SickSubmission::query()
+            ->whereHas('employee', function (Builder $q) use ($eoOnly) {
+                $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+            })
+            ->with(['employee']);
         if ($statusQuery !== null) {
             $sickSubmissions->where('status', $statusQuery);
         }

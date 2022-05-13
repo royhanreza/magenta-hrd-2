@@ -12,7 +12,9 @@ use Carbon\Carbon;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Exception;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -45,31 +47,38 @@ class LeaveController extends Controller
      */
     public function indexV2()
     {
+        // return [];
         $employeeColumns = ['id', 'employee_id', 'first_name', 'last_name', 'work_placement', 'start_work_date', 'photo'];
         // $leaves = Leave::whereHas('employee')->with(['employee' => function ($q) use ($employeeColumns) {
         //     $q->select($employeeColumns);
         // }, 'employee.careers' => function ($query) {
         //     $query->with(['jobTitle', 'designation', 'department'])->where('is_active', 1);
         // }])->where('is_active', 1)->get();
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
 
-        $employees = Employee::query()->whereHas('activeLeave')->with(['activeLeave', 'leaveSubmissions' => function ($q) {
-            $q->where('status', 'approved')->where('leave_dates', 'like', '%' . date("Y") . '%');
-        }])->where('is_active', 1)->select($employeeColumns)->get()->each(function ($employee) {
-            $leaveSubmissionsMonthly = collect($employee->leaveSubmissions)->map(function ($leaveSubmission) {
-                $dates = explode(',', $leaveSubmission->leave_dates);
-                // return collect($dates)->flatten();
-                return collect($dates)->filter(function ($date) {
-                    return date($date) >= date("Y-01-01") && date($date) <= date("Y-12-30");
-                });
-            })->flatten()->groupBy(function ($date) {
-                // return Carbon::parse($date)->month();
-                $month = (int) explode('-', $date)[1];
-                return $month;
-            })->map(function ($month, $key) {
-                return count($month);
-            })->all();
-            $employee->leave_monthly = $leaveSubmissionsMonthly;
-        });
+        $employees = Employee::query()
+            ->whereHas('activeLeave')
+            ->with(['activeLeave', 'leaveSubmissions' => function ($q) {
+                $q->where('status', 'approved')->where('leave_dates', 'like', '%' . date("Y") . '%');
+            }])
+            ->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)
+            ->where('is_active', 1)->select($employeeColumns)->get()->each(function ($employee) {
+                $leaveSubmissionsMonthly = collect($employee->leaveSubmissions)->map(function ($leaveSubmission) {
+                    $dates = explode(',', $leaveSubmission->leave_dates);
+                    // return collect($dates)->flatten();
+                    return collect($dates)->filter(function ($date) {
+                        return date($date) >= date("Y-01-01") && date($date) <= date("Y-12-30");
+                    });
+                })->flatten()->groupBy(function ($date) {
+                    // return Carbon::parse($date)->month();
+                    $month = (int) explode('-', $date)[1];
+                    return $month;
+                })->map(function ($month, $key) {
+                    return count($month);
+                })->all();
+                $employee->leave_monthly = $leaveSubmissionsMonthly;
+            });
         // return $permissions;
         // return $employees;
 
@@ -83,7 +92,9 @@ class LeaveController extends Controller
      */
     public function create()
     {
-        $employees = Employee::all();
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+        $employees = Employee::query()->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null)->get();
         $categories = PermissionCategory::all();
         return view('leave.create', ['employees' => $employees, 'categories' => $categories]);
     }
@@ -275,7 +286,13 @@ class LeaveController extends Controller
 
         $statusQuery = $request->query('status');
 
-        $leaveSubmissions = LeaveSubmission::with(['employee']);
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        $leaveSubmissions = LeaveSubmission::with(['employee'])
+            ->whereHas('employee', function (Builder $q) use ($eoOnly) {
+                $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+            });
         if ($statusQuery !== null) {
             $leaveSubmissions->where('status', $statusQuery);
         }

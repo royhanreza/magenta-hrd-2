@@ -7,7 +7,9 @@ use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\PermissionCategory;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -42,7 +44,14 @@ class PermissionController extends Controller
 
         $statusQuery = $request->query('status');
 
-        $permissionSubmission = Permission::with(['employee', 'permissionCategory']);
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
+        $permissionSubmission = Permission::query()
+            ->whereHas('employee', function (Builder $q) use ($eoOnly) {
+                $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+            })
+            ->with(['employee', 'permissionCategory']);
         if ($statusQuery !== null) {
             $permissionSubmission->where('status', $statusQuery);
         }

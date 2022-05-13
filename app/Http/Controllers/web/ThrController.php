@@ -13,7 +13,9 @@ use App\Models\SalaryIncome;
 use App\Models\SalarySetting;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -51,9 +53,12 @@ class ThrController extends Controller
 
         $employeeColumns = ['id', 'employee_id', 'first_name', 'last_name', 'work_placement', 'start_work_date', 'photo'];
 
+        $user = Auth::user();
+        $eoOnly = $user->eo_only;
+
         $previewPayslips = Career::query()
-            ->whereHas('employee', function ($q) use ($minimumDate) {
-                $q->where('start_work_date', '<=', $minimumDate)->where('is_active', 1)->where('id', '!=', 103);
+            ->whereHas('employee', function ($q) use ($minimumDate, $eoOnly) {
+                $q->where('start_work_date', '<=', $minimumDate)->where('is_active', 1)->where('id', '!=', 103)->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);;
             })
             ->whereHas('payslips')
             ->where('is_active', 1)
@@ -161,6 +166,9 @@ class ThrController extends Controller
         $endDatePeriod = date(($year + 1) . '-01-01');
 
         $finalPayslips = FinalPayslip::query()
+            ->whereHas('employee', function (Builder $q) use ($eoOnly) {
+                $q->where('employee_id', 'LIKE', $eoOnly ? 'EO%' : null);
+            })
             ->with(['employee' => function ($q) use ($employeeColumns) {
                 $q->select($employeeColumns);
             }])
